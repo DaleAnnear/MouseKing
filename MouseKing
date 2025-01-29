@@ -1,0 +1,305 @@
+#!/usr/bin/bash
+
+# Main script to manage and execute MouseKing 
+# Author: Dale J. Annear, PhD
+# Date: 2025/01/23
+
+globdir=$(dirname "$(realpath "$0")")
+# Function to run commands
+
+run_command() {
+    command="$1"
+    echo "Running command: $command"
+    
+    # Execute the command, streaming to both terminal and log
+    eval "$command" 2>&1 
+    
+    # Capture the exit status
+    status=${PIPESTATUS[0]}  # Ensure we capture the correct exit status
+    if [ $status -eq 0 ]; then
+        echo "Command completed successfully."
+    else
+        echo "Command failed with exit status $status."
+    fi
+}
+
+# MouseKing class-like behavior
+MouseKing() {
+    command="$1"
+    shift
+
+    case "$command" in
+        royale)
+            royale "$@"
+            ;;
+        integrity)
+            integrity "$@"
+            ;;
+        rebuild)
+            rebuild "$@"
+            ;;
+        extract)
+            extract "$@"
+            ;;
+        processing)
+            processing "$@"
+            ;;
+        pca)
+            pca "$@"
+            ;;         
+        *)
+            echo "Unrecognized command"
+            print_help
+            exit 1
+            ;;
+    esac
+}
+
+# Function for 'royale' command
+royale() {
+     if [[ -z "$1" || "$1" == "--help" ]]; then
+        echo "Usage: MouseKing royale [options]"
+        echo ""
+        echo "Options:"
+        echo "  -i  Input file containg full paths to LMT SQlite files to be processed (required)"
+        echo "  -m  File path to the mouse cage manifest (required)"
+        echo "  -s  Save name for the batch of SQlite files to be processed (required)"
+        echo "  -o  Path to the desired output directory (required)"
+        echo "  -f  Frame filter - DEFAULT RECOMMENDED (default: 15)"
+        echo "  -t  Time file - DEFAULT RECOMMENDED (default: NULL)"
+        echo ""
+        echo "Example:"
+        echo "  MouseKing royale -i /Example/data/input.txt -m /Example/data/manifest.json -s MouseKing_Example -o /Example/results"
+        return
+    fi
+
+    while getopts "i:m:s:o:f:t:" opt; do
+        case "$opt" in
+            i) input_file="$OPTARG" ;;
+            m) manifest="$OPTARG" ;;
+            s) save_name="$OPTARG" ;;
+            o) output="$OPTARG" ;;
+            f) frame_filter="$OPTARG" ;;
+            t) time_file="$OPTARG" ;;
+            *) echo "Invalid option"; exit 1 ;;
+        esac
+    done
+
+    frame_filter="${frame_filter:-15}"
+    time_file="${time_file:-NULL}"
+
+    if [[ -z "$input_file" || -z "$manifest" || -z "$save_name" || -z "$output" ]]; then
+        echo "Error: One or more required argument are missing. Please see --help for usage."
+        return 1
+    fi
+
+    echo "######    Performing full MouseKing pipeline  ######"
+    run_cmd="nextflow run '$globdir/Nextflow/MouseKing_main.nf' --input_file '$input_file' --manifest '$manifest' --save_name '$save_name' --output '$output' --time_file '$time_file' --event_frame_filter '$frame_filter'"
+    run_command "$run_cmd"
+}
+
+# Function for 'integrity' command
+integrity() {
+     if [[ -z "$1" || "$1" == "--help" ]]; then
+        echo "Usage: MouseKing integrity [options]"
+        echo ""
+        echo "Options:"
+        echo "  -i  Input file containg full paths to LMT SQlite files to be processed (required)"
+        echo "  -s  Save name for the batch of SQlite files to be processed (required)"
+        echo "  -o  Path to the desired output directory (required)"
+        echo ""
+        echo "Example:"
+        echo "  MouseKing integrity -i /Example/data/input.txt -s MouseKing_Example -o /Example/results"
+        return
+    fi
+
+    while getopts "i:s:o:" opt; do
+        case "$opt" in
+            i) input_file="$OPTARG" ;;
+            s) save_name="$OPTARG" ;;
+            o) output="$OPTARG" ;;
+            *) echo "Invalid option"; exit 1 ;;
+        esac
+    done
+
+    if [[ -z "$input_file" || -z "$save_name" || -z "$output" ]]; then
+        echo "Error: One or more required argument are missing. Please see --help for usage."
+        return 1
+    fi
+
+    echo "######    Checking integrity of LMT SQlite files  ######"
+    run_cmd="nextflow run '$globdir/Nextflow/MouseKing_integrity.nf' --input_file '$input_file' --save_name '$save_name' --output '$output'"
+    run_command "$run_cmd" 
+}
+
+# Function for 'rebuild' command
+rebuild() {
+     if [[ -z "$1" || "$1" == "--help" ]]; then
+        echo "Usage: MouseKing rebuild [options]"
+        echo ""
+        echo "Options:"
+        echo "  -i  Input file containg full paths to LMT SQlite files to be processed (required)"
+        echo "  -s  Save name for the batch of SQlite files to be processed (required)"
+        echo "  -o  Path to the desired output directory (required)"
+        echo ""
+        echo "Example:"
+        echo "  MouseKing rebuild -i /Example/data/input.txt -s MouseKing_Example -o /Example/results"
+        return
+    fi
+
+    while getopts "i:s:o:" opt; do
+        case "$opt" in
+            i) input_file="$OPTARG" ;;
+            s) save_name="$OPTARG" ;;
+            o) output="$OPTARG" ;;
+            *) echo "Invalid option"; exit 1 ;;
+        esac
+    done
+
+    if [[ -z "$input_file" || -z "$save_name" || -z "$output" ]]; then
+        echo "Error: One or more required argument are missing. Please see --help for usage."
+        return 1
+    fi
+
+    echo "######    Rebuilding mouse events in LMT SQlite files ######"
+    run_cmd="nextflow run '$globdir/Nextflow/MouseKing_rebuild.nf' --input_file '$input_file' --save_name '$save_name' --output '$output'"
+    run_command "$run_cmd"
+}
+
+# Function for 'extract' command
+extract() {
+     if [[ -z "$1" || "$1" == "--help" ]]; then
+        echo "Usage: MouseKing extract [options]"
+        echo ""
+        echo "Options:"
+        echo "  -i  Input file containg full paths to LMT SQlite files to be processed (required)"
+        echo "  -s  Save name for the batch of SQlite files to be processed (required)"
+        echo "  -o  Path to the desired output directory (required)"
+        echo ""
+        echo "Example:"
+        echo "  MouseKing extract -i /Example/data/input.txt -s MouseKing_Example -o /Example/results"
+        return
+    fi
+
+    while getopts "i:s:o:" opt; do
+        case "$opt" in
+            i) input_file="$OPTARG" ;;
+            s) save_name="$OPTARG" ;;
+            o) output="$OPTARG" ;;
+            *) echo "Invalid option"; exit 1 ;;
+        esac
+    done
+
+    if [[ -z "$input_file" || -z "$save_name" || -z "$output" ]]; then
+        echo "Error: One or more required argument are missing. Please see --help for usage."
+        return 1
+    fi
+
+    echo "Extracting EVENT and ANIMAL tables from LMT SQlite files"
+    run_cmd="nextflow run '$globdir/Nextflow/MouseKing_extract.nf' --input_file '$input_file' --save_name '$save_name' --output '$output'"
+    run_command "$run_cmd"
+
+}
+
+# Function for 'processing' command
+processing() {
+         if [[ -z "$1" || "$1" == "--help" ]]; then
+        echo "Usage: MouseKing processing [options]"
+        echo ""
+        echo "Options:"
+        echo "  -i  Input file containg full paths to LMT SQlite files to be processed (required)"
+        echo "  -m  File path to the mouse cage manifest (required)"
+        echo "  -s  Save name for the batch of SQlite files to be processed (required)"
+        echo "  -o  Path to the desired output directory (required)"
+        echo "  -f  Frame filter - DEFAULT RECOMMENDED (default: 15)"
+        echo "  -t  Time file - DEFAULT RECOMMENDED (default: NULL)"
+        echo ""
+        echo "Example:"
+        echo "  MouseKing processing -i /Example/data/input.txt -m /Example/data/manifest.json -s MouseKing_Example -o /Example/results"
+        return
+    fi
+
+    while getopts "i:m:s:o:f:t:" opt; do
+        case "$opt" in
+            i) input_file="$OPTARG" ;;
+            m) manifest="$OPTARG" ;;
+            s) save_name="$OPTARG" ;;
+            o) output="$OPTARG" ;;
+            f) frame_filter="$OPTARG" ;;
+            t) time_file="$OPTARG" ;;
+            *) echo "Invalid option"; exit 1 ;;
+        esac
+    done
+
+    frame_filter="${frame_filter:-15}"
+    time_file="${time_file:-NULL}"
+
+    if [[ -z "$input_file" || -z "$manifest" || -z "$save_name" || -z "$output" ]]; then
+        echo "Error: One or more required argument are missing. Please see --help for usage."
+        return 1
+    fi
+
+    echo "Performing filtering and processing of LMT data"
+    run_cmd="nextflow run '$globdir/Nextflow/MouseKing_processing.nf' --input_dir '$input_file' --manifest '$manifest' --save_name '$save_name' --output '$output' --time_file '$time_file' --event_frame_filter '$frame_filter'"
+    run_command "$run_cmd"
+
+}
+
+# Function for 'pca' command
+pca() {
+         if [[ -z "$1" || "$1" == "--help" ]]; then
+        echo "Usage: MouseKing processing [options]"
+        echo ""
+        echo "Options:"
+        echo "  -i  Path of the input directory containg the .csv files of processsed LMT data generated by MouseKing process / royale (required)"
+        echo "  -m  File path to the mouse cage manifest (required)"
+        echo "  -s  Save name for the batch of SQlite files to be processed (required)"
+        echo "  -o  Path to the desired output directory (required)"
+        echo ""
+        echo "Example:"
+        echo "  MouseKing processing -i /Example/data/input.txt -m /Example/data/manifest.json -s MouseKing_Example -o /Example/results"
+        return
+    fi
+
+    while getopts "i:m:s:o:f:t:" opt; do
+        case "$opt" in
+            i) input_dir="$OPTARG" ;;
+            m) manifest="$OPTARG" ;;
+            s) save_name="$OPTARG" ;;
+            o) output="$OPTARG" ;;
+            *) echo "Invalid option"; exit 1 ;;
+        esac
+    done
+
+    if [[ -z "$input_dir" || -z "$manifest" || -z "$save_name" || -z "$output" ]]; then
+        echo "Error: One or more required argument are missing. Please see --help for usage."
+        return 1
+    fi
+
+    echo "Constructing PCA plots for processed LMT data"
+    run_cmd="nextflow run '$globdir/Nextflow/MouseKing_pca.nf' --input_dir '$input_dir' --manifest '$manifest' --save_name '$save_name' --output '$output'"
+    run_command "$run_cmd"
+}
+
+# Display help message
+print_help() {
+    cat <<EOF
+Welcome to MouseKing! The eminent software pipeline to facilitate the data analysis of the next generation of mouse behaviour phenotyping through the LiveMouseTracker (LMT) platform.
+
+The available commands are:
+    royale                  Executes the full MouseKing pipeline
+    integrity               Checks the integrity of the provided LMT SQlite files
+    rebuild                 Rebuilds all detected mouse events in the provided LMT SQlite files
+    extract                 Extracts the EVENT and ANIMAL tables from the provided LMT SQlite files
+    processing              Performs processing and filtering of the extracted LMT data contained within the EVENT and ANIMAL tables
+    pca                     Constructs PCA plots for the provided processed LMT data
+EOF
+}
+
+# Main execution
+if [ $# -eq 0 ]; then
+    print_help
+    exit 1
+fi
+
+MouseKing "$@"

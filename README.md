@@ -48,13 +48,17 @@ The only Prerequisites for MouseKing are a Linux system and the installation of 
 
 ### Installing
 
-A step by step series of examples that tell you how to get a development env running.
+The below step by step guide will help you to install the MouseKing software.
 
-1. Download or pull or clone repo
+1. Clone or downlaod the MouseKing repository
+
+To clone the MouseKing repository using ```git``` navigate to the directory on your system where you would like to install in repository and execute the following command:
 
 ```
-Step 1
+git clone https://github.com/DaleAnnear/MouseKing.git
 ```
+
+Alternatively, you can downloand a zip of the MouseKing repository from the GitHub website. Download the .zip file to a directory of your choice and extract the repository.  
 
 2. Build apptainer images
 
@@ -64,7 +68,7 @@ Naviage to the MouseKing Apptianer directory
 cd MouseKing/Apptainer
 ```
 
-There are 3 apptainer images that need to be built. Please note each image can take several minutes to buiild
+There are 3 apptainer images that need to be built. Please note each image can take several minutes to build. We reccommend that the below commands be executed with sudo, however, in the case that this is not possible, this should not effect the building of the apptainer images.
 
 ```
 sudo apptainer build 1_LMT_rebuild.sif 1_LMT_rebuild.def
@@ -72,8 +76,9 @@ sudo apptainer build 2_LMT_processing.sif 2_LMT_processing.def
 sudo apptainer build 3_LMT_pca.sif  3_LMT_pca.def
 ```
 
-Once this is complete, if you execute an ls command the following six files should be present in the Apptainer directory.
+Once this is complete, if you execute an ```ls``` command within the Apptainer directory the following 9 files should be present.
 
+```
 1_LMT_rebuild.def 
 1_LMT_rebuild.sif
 1_LMT_rebuild.yml
@@ -83,6 +88,7 @@ Once this is complete, if you execute an ls command the following six files shou
 3_LMT_pca.def
 3_LMT_pca.sif
 3_LMT_pca.yml
+```
 
 3. Add to path
 
@@ -91,15 +97,41 @@ Return to the MouseKing directory with the following command
 ```
 cd ..
 ```
-Next we will add MouseKing to your PATH so that it may be exectued from any location
+Next add the MouseKing direcory to your PATH so that it may be exectued from any location  
+**NOTE:** Replace "/your/directory/path/" with the paath on your system which contians the the MouseKing repositories
 
 ```
-add path
+echo 'export PATH="$PATH:/your/directory/path/MouseKing"' >> ~/.bashrc && source ~/.bashrc
 ```
+
+## 🔧 Running the tests <a name = "tests"></a>
+
+Navigate into the MouseKing Directory.
+
+```
+cd MouseKing
+```
+
+You can test if the the MouseKing pipeline is installed correctly by executing the below command.  
+**NOTE:** *The below command **MUST** be executed within the MouseKing directory ($YOUR_PATH/MouseKing) to be sucessful.*
+
+```
+MouseKing royale -i /Example/data/input.txt -m /Example/data/manifest.json -s MouseKing_Example -o /Example/results
+```
+
+**ALTERNATIVELY:**  
+The below command can be run from anywhere, but the full path must be provided for the input arguments.
+
+```
+MouseKing royale -i $YOUR_PATH/MouseKing/Example/data/input.txt -m $YOUR_PATH/MouseKing/Example/data/manifest.json -s MouseKing_Example -o $YOUR_PATH/MouseKing/Example/results
+```
+
+## 🎈 Usage <a name="usage"></a>
+
 
 4. Run MouseKing
 
-By running the MouseKing command:
+By running MouseKing:
 
 ```
 MosueKing
@@ -117,39 +149,41 @@ The available commands are:
     pca                     Constructs PCA plots for the provided processed LMT data
 ```
 
-
-## 🔧 Running the tests <a name = "tests"></a>
-
-Navigate into the MouseKing Directory.
+The "royale" command runs the entire MouseKing pipeline. By executing the follwing command:
 
 ```
-cd MouseKing
+MosueKing royale --help
 ```
 
-You can test if the the MouseKing pipeline is installed correctly by executing the below command.
-**NOTE:** *The below command **MUST** be executed within the MouseKing directory ($YOUR_PATH/MouseKing) to be sucessful.*
+The following output should be seen in your console:
 
 ```
-MouseKing royale -i /Example/data/input.txt -m /Example/data/manifest.json -s MouseKing_Example -o /Example/results
+Usage: MouseKing royale [options]
+
+Options:
+  -i  Input file containg full paths to LMT SQlite files to be processed (required)
+  -m  File path to the mouse cage manifest (required)
+  -s  Save name for the batch of SQlite files to be processed (required)
+  -o  Path to the desired output directory (required)
+  -f  Frame filter - DEFAULT RECOMMENDED (default: 15)
+  -t  Time file - DEFAULT RECOMMENDED (default: NULL)
+
+Example:
+  MouseKing royale -i /Example/data/input.txt -m /Example/data/manifest.json -s MouseKing_Example -o /Example/results
 ```
 
-**ALTERNATIVELY:**
-The below command can be run from anywhere, but the full path must be provided for the input arguments.
+The other MouseKing commands (integrity, rebuild, extract, processing, and pca) can be used to execute the specific steps of the pipeline individually. For more information on each step you can execture the following:
 
 ```
-MouseKing royale -i $YOUR_PATH/MouseKing/Example/data/input.txt -m $YOUR_PATH/MouseKing/Example/data/manifest.json -s MouseKing_Example -o $YOUR_PATH/MouseKing/Example/results
+MouseKind <command> --help
 ```
-
-## 🎈 Usage <a name="usage"></a>
-
-Add notes about how to use the system.
 
 ## ⛏️ Built Using <a name = "built_using"></a>
 
-- [R](https://www.r-project.org/) - Code
-- [Python](https://www.python.org/) - Code
-- [Apptainer](https://apptainer.org/) - Environment and reproducibility
-- [Nextflow](https://www.nextflow.io/) - Workflow management
+- [R](https://www.r-project.org/)       - Code
+- [Python](https://www.python.org/)     - Code
+- [Apptainer](https://apptainer.org/)   - Environment and reproducibility
+- [Nextflow](https://www.nextflow.io/)  - Workflow management
 
 ## ✍️ Authors <a name = "authors"></a>
 

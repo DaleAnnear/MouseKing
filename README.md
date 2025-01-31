@@ -31,7 +31,15 @@
 
 ## 🧐 About <a name = "about"></a>
 
-Write about 1-2 paragraphs describing the purpose of your project.
+Welcome to MouseKing! The eminent software pipeline to facilitate the data analysis of the next generation of mouse behaviour phenotyping through the LiveMouseTracker (LMT) platform.
+
+The available commands are:
+    royale                  Executes the full MouseKing pipeline
+    integrity               Checks the integrity of the provided LMT SQlite files
+    rebuild                 Rebuilds all detected mouse events in the provided LMT SQlite files
+    extract                 Extracts the EVENT and ANIMAL tables from the provided LMT SQlite files
+    processing              Performs processing and filtering of the extracted LMT data contained within the EVENT and ANIMAL tables
+    pca                     Constructs PCA plots for the provided processed LMT data
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
 
@@ -49,30 +57,37 @@ The only Prerequisites for MouseKing are a Linux system and the installation of 
 
 A step by step series of examples that tell you how to get a development env running.
 
-Say what the step will be
+1. Download or pull repo
 
 ```
-Give the example
+Step 1
 ```
 
-And repeat
+2. Build apptainer images
 
 ```
-until finished
+Step 2
 ```
 
-End with an example of getting some data out of the system or using it for a little demo.
+3. Add to path
+
+```
+Step 3
+```
+
 
 ## 🔧 Running the tests <a name = "tests"></a>
 
-Explain how to run the automated tests for this system.
-
-### Break down into end to end tests
-
-Explain what these tests test and why
+You can test if the the MouseKing pipeline works with the below command. NOTE: The below command MUST be executed within the MouseKing ($YOUR_PATH/MouseKing) directory to execute sucessfully.
 
 ```
-Give an example
+MouseKing royale -i /Example/data/input.txt -m /Example/data/manifest.json -s MouseKing_Example -o /Example/results
+```
+
+Alternativelty, the below command can be run from anywhere, but the full path must be provide for the input arguments.
+
+```
+MouseKing royale -i $YOUR_PATH/MouseKing/Example/data/input.txt -m $YOUR_PATH/MouseKing/Example/data/manifest.json -s MouseKing_Example -o $YOUR_PATH/MouseKing/Example/results
 ```
 
 ## 🎈 Usage <a name="usage"></a>

@@ -36,7 +36,7 @@ Welcome to MouseKing! The eminent software pipeline to facilitate the data analy
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+The following instructions will help you to set up the MouseKing pipeline.
 
 ### Prerequisites
 

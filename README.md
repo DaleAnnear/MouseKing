@@ -33,13 +33,6 @@
 
 Welcome to MouseKing! The eminent software pipeline to facilitate the data analysis of the next generation of mouse behaviour phenotyping through the LiveMouseTracker (LMT) platform.
 
-The available commands are:
-    royale                  Executes the full MouseKing pipeline
-    integrity               Checks the integrity of the provided LMT SQlite files
-    rebuild                 Rebuilds all detected mouse events in the provided LMT SQlite files
-    extract                 Extracts the EVENT and ANIMAL tables from the provided LMT SQlite files
-    processing              Performs processing and filtering of the extracted LMT data contained within the EVENT and ANIMAL tables
-    pca                     Constructs PCA plots for the provided processed LMT data
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
 
@@ -57,7 +50,7 @@ The only Prerequisites for MouseKing are a Linux system and the installation of 
 
 A step by step series of examples that tell you how to get a development env running.
 
-1. Download or pull repo
+1. Download or pull or clone repo
 
 ```
 Step 1
@@ -65,14 +58,63 @@ Step 1
 
 2. Build apptainer images
 
+Naviage to the MouseKing Apptianer directory
+
 ```
-Step 2
+cd MouseKing/Apptainer
 ```
+
+There are 3 apptainer images that need to be built. Please note each image can take several minutes to buiild
+
+```
+sudo apptainer build 1_LMT_rebuild.sif 1_LMT_rebuild.def
+sudo apptainer build 2_LMT_processing.sif 2_LMT_processing.def
+sudo apptainer build 3_LMT_pca.sif  3_LMT_pca.def
+```
+
+Once this is complete, if you execute an ls command the following six files should be present in the Apptainer directory.
+
+1_LMT_rebuild.def 
+1_LMT_rebuild.sif
+1_LMT_rebuild.yml
+2_LMT_processing.def
+2_LMT_processing.sif
+2_LMT_processing.yml
+3_LMT_pca.def
+3_LMT_pca.sif
+3_LMT_pca.yml
 
 3. Add to path
 
+Return to the MouseKing directory with the following command
+
 ```
-Step 3
+cd ..
+```
+Next we will add MouseKing to your PATH so that it may be exectued from any location
+
+```
+add path
+```
+
+4. Run MouseKing
+
+By running the MouseKing command:
+
+```
+MosueKing
+```
+
+You should see the following output in your console:
+
+```
+The available commands are:
+    royale                  Executes the full MouseKing pipeline
+    integrity               Checks the integrity of the provided LMT SQlite files
+    rebuild                 Rebuilds all detected mouse events in the provided LMT SQlite files
+    extract                 Extracts the EVENT and ANIMAL tables from the provided LMT SQlite files
+    processing              Performs processing and filtering of the extracted LMT data contained within the EVENT and ANIMAL tables
+    pca                     Constructs PCA plots for the provided processed LMT data
 ```
 
 

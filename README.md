@@ -78,13 +78,21 @@ Step 3
 
 ## 🔧 Running the tests <a name = "tests"></a>
 
-You can test if the the MouseKing pipeline works with the below command. NOTE: The below command MUST be executed within the MouseKing ($YOUR_PATH/MouseKing) directory to execute sucessfully.
+Navigate into the MouseKing Directory.
+
+```
+cd MouseKing
+```
+
+You can test if the the MouseKing pipeline is installed correctly by executing the below command.
+**NOTE:** *The below command **MUST** be executed within the MouseKing directory ($YOUR_PATH/MouseKing) to be sucessful.*
 
 ```
 MouseKing royale -i /Example/data/input.txt -m /Example/data/manifest.json -s MouseKing_Example -o /Example/results
 ```
 
-Alternativelty, the below command can be run from anywhere, but the full path must be provide for the input arguments.
+**ALTERNATIVELY:**
+The below command can be run from anywhere, but the full path must be provided for the input arguments.
 
 ```
 MouseKing royale -i $YOUR_PATH/MouseKing/Example/data/input.txt -m $YOUR_PATH/MouseKing/Example/data/manifest.json -s MouseKing_Example -o $YOUR_PATH/MouseKing/Example/results

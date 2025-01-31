@@ -8,9 +8,9 @@
 <div align="center">
 
 [![Status](https://img.shields.io/badge/status-active-success.svg)]()
-[![GitHub Issues](https://img.shields.io/github/issues/kylelobo/The-Documentation-Compendium.svg)](https://github.com/DaleAnnear/MouseKing/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/kylelobo/The-Documentation-Compendium.svg)](https://github.com/DaleAnnear/MouseKing/pulls)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
+[![GitHub Issues](https://img.shields.io/github/issues/DaleAnnear/MouseKing.svg)](https://github.com/DaleAnnear/MouseKing/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/DaleAnnear/MosueKing.svg)](https://github.com/DaleAnnear/MouseKing/pulls)
+[![License](https://img.shields.io/badge/license-idontknow-blue)](/LICENSE)
 
 </div>
 

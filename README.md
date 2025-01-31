@@ -98,7 +98,7 @@ Return to the MouseKing directory with the following command
 cd ..
 ```
 Next add the MouseKing direcory to your PATH so that it may be exectued from any location  
-**NOTE:** Replace "/your/directory/path/" with the paath on your system which contians the the MouseKing repositories
+**NOTE:** Replace "/your/directory/path/" with the paath on your system which contians the the MouseKing repository
 
 ```
 echo 'export PATH="$PATH:/your/directory/path/MouseKing"' >> ~/.bashrc && source ~/.bashrc
@@ -175,7 +175,7 @@ Example:
 The other MouseKing commands (integrity, rebuild, extract, processing, and pca) can be used to execute the specific steps of the pipeline individually. For more information on each step you can execture the following:
 
 ```
-MouseKind <command> --help
+MouseKing <command> --help
 ```
 
 ## ⛏️ Built Using <a name = "built_using"></a>

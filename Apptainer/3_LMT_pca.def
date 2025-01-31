@@ -51,8 +51,8 @@ From: rocker/r-base:latest
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
 %files
-    "/mnt/c/Users/Dale/OneDrive - Universiteit Antwerpen/Post Doc/Bioinfo/LMT/Pipeline/scripts/LMT_PCA_visualisation.R" /workspace/LMT_PCA_visualisation.R
-    "/mnt/c/Users/Dale/OneDrive - Universiteit Antwerpen/Post Doc/Bioinfo/LMT/Pipeline/scripts/LMT_functions.R" /workspace/LMT_functions.R
+    "../scripts/LMT_PCA_visualisation.R" /workspace/LMT_PCA_visualisation.R
+    "../scripts/LMT_functions.R" /workspace/LMT_functions.R
 
 %environment
     export PATH=/usr/bin:$PATH

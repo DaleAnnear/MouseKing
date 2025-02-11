@@ -72,7 +72,7 @@ royale() {
         echo "  -t  Time file - DEFAULT RECOMMENDED (default: NULL)"
         echo ""
         echo "Example:"
-        echo "  MouseKing royale -i Example/data/input.txt -m Example/data/manifest.txt -s MouseKing_Example -o Example/results"
+        echo "  MouseKing royale -i Example/data/input.txt -m Example/data/Example_manifest.txt -s MouseKing_Example -o Example/results"
         return
     fi
 
@@ -146,7 +146,7 @@ rebuild() {
         echo "  -o  Path to the desired output directory (required)"
         echo ""
         echo "Example:"
-        echo "  MouseKing rebuild -i /Example/data/input.txt -s MouseKing_Example -o /Example/results"
+        echo "  MouseKing rebuild -i Example/data/input.txt -s MouseKing_Example -o Example/results"
         return
     fi
 
@@ -180,7 +180,7 @@ extract() {
         echo "  -o  Path to the desired output directory (required)"
         echo ""
         echo "Example:"
-        echo "  MouseKing extract -i /Example/data/input.txt -s MouseKing_Example -o /Example/results"
+        echo "  MouseKing extract -i Example/data/input.txt -s MouseKing_Example -o Example/results"
         return
     fi
 
@@ -218,7 +218,7 @@ processing() {
         echo "  -t  Time file - DEFAULT RECOMMENDED (default: NULL)"
         echo ""
         echo "Example:"
-        echo "  MouseKing processing -i /Example/data/input.txt -m /Example/data/manifest.json -s MouseKing_Example -o /Example/results"
+        echo "  MouseKing processing -i Example/data/input.txt -m Example/data/Example_manifest.txt -s MouseKing_Example -o Example/results"
         return
     fi
 
@@ -260,7 +260,7 @@ pca() {
         echo "  -o  Path to the desired output directory (required)"
         echo ""
         echo "Example:"
-        echo "  MouseKing processing -i /Example/data/input.txt -m /Example/data/manifest.json -s MouseKing_Example -o /Example/results"
+        echo "  MouseKing processing -i Example/data/input.txt -m Example/data/Example_manifest.txt -s MouseKing_Example -o Example/results"
         return
     fi
 

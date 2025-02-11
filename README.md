@@ -164,7 +164,7 @@ MouseKing royale -i Example/data/input.txt -m Example/data/manifest.txt -s Mouse
 The below command can be run from anywhere, but the full path must be provided for the input arguments.
 
 ```
-MouseKing royale -i $YOUR_PATH/MouseKing/Example/data/input.txt -m $YOUR_PATH/MouseKing/Example/data/manifest.txt -s MouseKing_Example -o $YOUR_PATH/MouseKing/Example/results
+MouseKing royale -i $YOUR_PATH/MouseKing/Example/data/input.txt -m $YOUR_PATH/MouseKing/Example/data/Example_manifest.txt -s MouseKing_Example -o $YOUR_PATH/MouseKing/Example/results
 ```
 
 ## 🎈 Usage <a name="usage"></a>
@@ -207,7 +207,7 @@ Options:
   -t  Time file - DEFAULT RECOMMENDED (default: NULL)
 
 Example:
-  MouseKing royale -i /Example/data/input.txt -m /Example/data/manifest.json -s MouseKing_Example -o /Example/results
+  MouseKing royale -i Example/data/input.txt -m Example/data/Example_manifest.txt -s MouseKing_Example -o Example/results
 ```
 
 The other MouseKing commands (integrity, rebuild, extract, processing, and pca) can be used to execute the specific steps of the pipeline individually. For more information on each step you can execture the following:

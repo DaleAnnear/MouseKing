@@ -72,7 +72,7 @@ royale() {
         echo "  -t  Time file - DEFAULT RECOMMENDED (default: NULL)"
         echo ""
         echo "Example:"
-        echo "  MouseKing royale -i /Example/data/input.txt -m /Example/data/manifest.json -s MouseKing_Example -o /Example/results"
+        echo "  MouseKing royale -i Example/data/input.txt -m Example/data/manifest.txt -s MouseKing_Example -o Example/results"
         return
     fi
 
@@ -112,7 +112,7 @@ integrity() {
         echo "  -o  Path to the desired output directory (required)"
         echo ""
         echo "Example:"
-        echo "  MouseKing integrity -i /Example/data/input.txt -s MouseKing_Example -o /Example/results"
+        echo "  MouseKing integrity -i Example/data/input.txt -s MouseKing_Example -o Example/results"
         return
     fi
 

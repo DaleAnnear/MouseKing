@@ -1,6 +1,6 @@
 <p align="center">
   <a href="" rel="noopener">
- <img width=300px height=300px src="https://github.com/DaleAnnear/MouseKing/blob/main/LICENSE/logo.png" alt="Project logo"></a>
+ <img width=300px height=300px src="https://github.com/DaleAnnear/MouseKing/blob/main/LICENSE/imgs/logo.png" alt="Project logo"></a>
 </p>
 
 <h3 align="center">MouseKing</h3>
@@ -9,7 +9,7 @@
 
 [![Status](https://img.shields.io/badge/status-active-success.svg)]()
 [![GitHub Issues](https://img.shields.io/github/issues/DaleAnnear/MouseKing.svg)](https://github.com/DaleAnnear/MouseKing/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/DaleAnnear/MosueKing.svg)](https://github.com/DaleAnnear/MouseKing/pulls)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/DaleAnnear/MouseKing.svg)](https://github.com/DaleAnnear/MouseKing/pulls)
 [![License](https://img.shields.io/badge/license-idontknow-blue)](/LICENSE)
 
 </div>
@@ -60,26 +60,70 @@ git clone https://github.com/DaleAnnear/MouseKing.git
 
 Alternatively, you can downloand a zip of the MouseKing repository from the GitHub website. Download the .zip file to a directory of your choice and extract the repository.  
 
-2. Build apptainer images
+2. chmod MouseKing to allow for execution
 
+Naviage into the MouseKing directory cloned from Github.
+
+```
+cd MouseKing
+```
+
+Once there use the following script to all for command line execution of MouseKing
+
+```
+chmod +x MouseKing
+```
+
+3. Check connection to Sylabs Cloud through Apptainer
+
+Firstly, ensure the Sylabs remote endpoint is linked to your apptainer endpoint. Run:
+
+```
+apptainer remote list
+```
+If Apptainer is installed you should see the following output, or a very similar output.
+
+<p align="centre">
+  <a href="" rel="noopener">
+ <img width=600px height=150px src="https://github.com/DaleAnnear/MouseKing/blob/main/LICENSE/imgs/remote_list.png" alt="Project logo"></a>
+</p>
+
+You need to ensure that "library.sylabs.io" is lsited under the "URI" column.
+
+If not run:
+```
+apptainer remote add SylabsCloud cloud.sylabs.io
+```
+
+You may need to log into Syslabs Cloud. To achieve this run: 
+```
+apptainer remote login SylabsCloud
+```
+You may need to perform an authentication. To achieve this follow the instructions that will come up within your console. 
+
+4. Add MouseKing to your path
+
+Ensure your current working directory is your MouseKing directory
+
+Next add the MouseKing direcory to your PATH so that it may be exectued from any location  
+**NOTE:** Replace "/your/directory/path/" with the paath on your system which contians the the MouseKing repository
+
+```
+echo 'export PATH="$PATH:/your/directory/path/MouseKing"' >> ~/.bashrc && source ~/.bashrc
+```
+
+5. Install MouseKing apptainer images
 Naviage to the MouseKing Apptianer directory
 
+Run the following to install the full MouseKing enviroment on your system and fetch the required image files from Sylab Cloud
 ```
-cd MouseKing/Apptainer
-```
-
-There are 3 apptainer images that need to be built. Please note each image can take several minutes to build. We reccommend that the below commands be executed with sudo, however, in the case that this is not possible, this should not effect the building of the apptainer images.
-
-```
-sudo apptainer build 1_LMT_rebuild.sif 1_LMT_rebuild.def
-sudo apptainer build 2_LMT_processing.sif 2_LMT_processing.def
-sudo apptainer build 3_LMT_pca.sif  3_LMT_pca.def
+MouseKing install
 ```
 
 Once this is complete, if you execute an ```ls``` command within the Apptainer directory the following 9 files should be present.
 
 ```
-1_LMT_rebuild.def 
+1_LMT_rebuild.def
 1_LMT_rebuild.sif
 1_LMT_rebuild.yml
 2_LMT_processing.def
@@ -90,19 +134,16 @@ Once this is complete, if you execute an ```ls``` command within the Apptainer d
 3_LMT_pca.yml
 ```
 
-3. Add to path
+ALTERNATIVELY: If the .sif files are not present, you can use apptainer to build the images from the .def files. **To do this you must have root privileges. Please note each image can take several minutes or longer to build**. 
 
-Return to the MouseKing directory with the following command
-
-```
-cd ..
-```
-Next add the MouseKing direcory to your PATH so that it may be exectued from any location  
-**NOTE:** Replace "/your/directory/path/" with the paath on your system which contians the the MouseKing repository
+Navigate into the Apptainer directory. If you are with the MouseKing directory, execute ```cd Apptainer```
 
 ```
-echo 'export PATH="$PATH:/your/directory/path/MouseKing"' >> ~/.bashrc && source ~/.bashrc
+sudo apptainer build 1_LMT_rebuild.sif 1_LMT_rebuild.def
+sudo apptainer build 2_LMT_processing.sif 2_LMT_processing.def
+sudo apptainer build 3_LMT_pca.sif  3_LMT_pca.def
 ```
+
 
 ## 🔧 Running the tests <a name = "tests"></a>
 
@@ -116,25 +157,22 @@ You can test if the the MouseKing pipeline is installed correctly by executing t
 **NOTE:** *The below command **MUST** be executed within the MouseKing directory ($YOUR_PATH/MouseKing) to be sucessful.*
 
 ```
-MouseKing royale -i /Example/data/input.txt -m /Example/data/manifest.json -s MouseKing_Example -o /Example/results
+MouseKing royale -i Example/data/input.txt -m Example/data/manifest.txt -s MouseKing_Example -o Example/results
 ```
 
 **ALTERNATIVELY:**  
 The below command can be run from anywhere, but the full path must be provided for the input arguments.
 
 ```
-MouseKing royale -i $YOUR_PATH/MouseKing/Example/data/input.txt -m $YOUR_PATH/MouseKing/Example/data/manifest.json -s MouseKing_Example -o $YOUR_PATH/MouseKing/Example/results
+MouseKing royale -i $YOUR_PATH/MouseKing/Example/data/input.txt -m $YOUR_PATH/MouseKing/Example/data/manifest.txt -s MouseKing_Example -o $YOUR_PATH/MouseKing/Example/results
 ```
 
 ## 🎈 Usage <a name="usage"></a>
 
-
-4. Run MouseKing
-
 By running MouseKing:
 
 ```
-MosueKing
+MouseKing
 ```
 
 You should see the following output in your console:
@@ -152,7 +190,7 @@ The available commands are:
 The "royale" command runs the entire MouseKing pipeline. By executing the follwing command:
 
 ```
-MosueKing royale --help
+MouseKing royale --help
 ```
 
 The following output should be seen in your console:

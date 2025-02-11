@@ -189,10 +189,10 @@ From: rocker/r-base:latest
 
 """
 
-def_example_file_content = f"""{glob_dir}/Example/1765-24.sqlite
-{glob_dir}/Example/1766-24.sqlite
-{glob_dir}/Example/1767-24.sqlite
-{glob_dir}/Example/decoy_file.sqlite
+def_example_file_content = f"""{glob_dir}/Example/data/1765-24.sqlite
+{glob_dir}/Example/data/1766-24.sqlite
+{glob_dir}/Example/data/1767-24.sqlite
+{glob_dir}/Example/data/decoy_file.sqlite
 """
 
 # Save to a file

@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 //Set Nextflow work directory
-MouseKingDir = "${projectDir}/../"
+MouseKingDir = "${projectDir}/.."
 
 //Required pipeline parameters
 params.input_file = "${MouseKingDir}/Example/data/sqlite_file_list.txt"

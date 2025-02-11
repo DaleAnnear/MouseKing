@@ -212,6 +212,9 @@ def_example_file = f"{glob_dir}/Example/data/input.txt"
 with open(def_example_file, "w") as file:
     file.write(def_example_file_content)
     
-os.system(f"apptainer build {glob_dir}/Apptainer/1_LMT_rebuild.sif {glob_dir}/Apptainer/1_LMT_rebuild.def")
-os.system(f"apptainer build {glob_dir}/Apptainer/2_LMT_processing.sif {glob_dir}/Apptainer/2_LMT_processing.def")
-os.system(f"apptainer build {glob_dir}/Apptainer/3_LMT_pca.sif {glob_dir}/Apptainer/3_LMT_pca.def")
+#os.system(f"apptainer build {glob_dir}/Apptainer/1_LMT_rebuild.sif {glob_dir}/Apptainer/1_LMT_rebuild.def")
+#os.system(f"apptainer build {glob_dir}/Apptainer/2_LMT_processing.sif {glob_dir}/Apptainer/2_LMT_processing.def")
+#os.system(f"apptainer build {glob_dir}/Apptainer/3_LMT_pca.sif {glob_dir}/Apptainer/3_LMT_pca.def")
+os.system(f"apptainer build {glob_dir}/Apptainer/1_LMT_rebuild.sif library://daleannear/mouseking/lmtrebuild")
+os.system(f"apptainer build {glob_dir}/Apptainer/2_LMT_processing.sif library://daleannear/mouseking/lmtprocess")
+os.system(f"apptainer build {glob_dir}/Apptainer/3_LMT_pca.sif library://daleannear/mouseking/lmtpca")

@@ -80,20 +80,23 @@ df_wide[is.na(df_wide) ] <- 0
 
 # Normalised data to be used in PCA
 nz_groups <- c("event_count_nz", "event_dur_nz", "sd_nz", "all")
+grp_cols <- c("#00AFBB", "#FC4E07", "darkorchid1", "#E7B800", "#0CB702", "#CC79A7", "red", "gray", "black")
 
 # Build PCA Plots
 for (x in nz_groups){
-  print(paste0("CONSTRUCTING PCA: ", " ", "options$save_name", " - ", x))
+  print(paste0("CONSTRUCTING PCA: ", " ", options$save_name, " - ", x))
   if (x == "all") numerical_data <- df_wide[3:ncol(df_wide)]
     else {
       nz_names <- grep(x, names(df_wide))
       nz_names <- names(df_wide)[grep(x, names(df_wide))]
       numerical_data <- df_wide[nz_names]
     }
-  
+
+  numerical_data <- numerical_data[, !sapply(numerical_data, function(col) any(is.infinite(col)))]
+
   # PCA
   data.pca <- prcomp(numerical_data)
-  
+
   # Contributory factors
   tiff(paste0(out_path, options$save_name, "_", x, "_CF.tiff"), units="in", width=7.5, height=5, res=300)
   plot_var <- fviz_pca_var(data.pca,
@@ -102,13 +105,14 @@ for (x in nz_groups){
                repel = TRUE)
   print(plot_var)
   dev.off()
-  
+
+  plot_cols <- grp_cols[1:length(unique(df_wide$Genotype))]
   # PCA
   tiff(paste0(out_path, options$save_name, "_", x, "_PCA.tiff"), units="in", width=7.5, height=5, res=300)
   groups <- as.factor(df_wide$Genotype)
   plot_ind <- fviz_pca_ind(data.pca,
                col.ind = groups, # color by groups
-               palette = c("#00AFBB",  "#FC4E07"),
+               palette = plot_cols,
                addEllipses = TRUE, # Concentration ellipses
                ellipse.type = "confidence",
                legend.title = "Groups",

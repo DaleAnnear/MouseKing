@@ -85,7 +85,7 @@ If Apptainer is installed you should see the following output, or a very similar
 
 <p align="centre">
   <a href="" rel="noopener">
- <img width=600px height=150px src="https://github.com/DaleAnnear/MouseKing/blob/main/LICENSE/imgs/remote_list.png" alt="Project logo"></a>
+ <img width=800px height=150px src="https://github.com/DaleAnnear/MouseKing/blob/main/LICENSE/imgs/remote_list.png" alt="Project logo"></a>
 </p>
 
 You need to ensure that "library.sylabs.io" is lsited under the "URI" column.

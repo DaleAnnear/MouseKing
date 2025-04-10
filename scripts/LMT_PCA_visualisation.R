@@ -9,6 +9,8 @@ library(dplyr)
 library(tidyr)
 library(tidyverse)
 library(M3C)
+library(ggplot2)
+library(ggforce)
 source("/workspace/LMT_functions.R")
 
 # Initiate option list
@@ -91,32 +93,49 @@ for (x in nz_groups){
       nz_names <- names(df_wide)[grep(x, names(df_wide))]
       numerical_data <- df_wide[nz_names]
     }
-
+  
   numerical_data <- numerical_data[, !sapply(numerical_data, function(col) any(is.infinite(col)))]
-
+  
+  print(numerical_data)
   # PCA
   data.pca <- prcomp(numerical_data)
-
-  # Contributory factors
-  tiff(paste0(out_path, options$save_name, "_", x, "_CF.tiff"), units="in", width=7.5, height=5, res=300)
-  plot_var <- fviz_pca_var(data.pca,
-               col.var = "contrib", # Color by contributions to the PC
-               gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-               repel = TRUE)
-  print(plot_var)
-  dev.off()
-
-  plot_cols <- grp_cols[1:length(unique(df_wide$Genotype))]
-  # PCA
-  tiff(paste0(out_path, options$save_name, "_", x, "_PCA.tiff"), units="in", width=7.5, height=5, res=300)
-  groups <- as.factor(df_wide$Genotype)
-  plot_ind <- fviz_pca_ind(data.pca,
+     # PCA
+    tiff(paste0(out_path, options$save_name, "_", x, "_PCA.tiff"), units="in", width=7.5, height=5, res=300)
+    groups <- as.factor(df_wide$Genotype)
+    plot_ind <- fviz_pca_ind(data.pca,
                col.ind = groups, # color by groups
-               palette = plot_cols,
+               palette = grp_cols,
                addEllipses = TRUE, # Concentration ellipses
                ellipse.type = "confidence",
                legend.title = "Groups",
                repel = TRUE)
-  print(plot_ind)
-  dev.off()
+    print(plot_ind)
+    dev.off()
+    
+    # Contributing Factors Arrows 
+    tiff(paste0(out_path, options$save_name, "_", x, "_CF.tiff"), units="in", width=7.5, height=5, res=300)
+    plot_var <- fviz_pca_var(data.pca,
+               col.var = "contrib", # Color by contributions to the PC
+               gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+               repel = TRUE)
+    print(plot_var)
+    dev.off()
 }
+  
+fwrite(as.data.frame(data.pca$rotation), paste0(out_path, options$save_name, "_PCA_data", ".csv"), sep=",", row.names = T, col.names = T, quote = F)
+
+  # Contributing Factors Circles
+  contrib_df <- contrib_circle_plots(data.pca, out_path, options$save_name)
+  contrib_df <- contrib_df[contrib_df$pca.group == "event_count_nz", c("component","Dim.1", "Dim.2", "Dim.comb", "behaviour","behaviour.group", "pca.group", "Event_Type")]
+  
+  # Contributing Factors Boxplots
+  gb <- ggplot(contrib_df, aes(x = behaviour.group, y = Dim.comb, fill = behaviour.group)) +
+    geom_boxplot() +
+    theme_minimal() +
+    labs(x = "Behavior Group", y = "Contrib") +
+    theme(axis.text.x = element_blank(), axis.title.x = element_blank()) + scale_fill_manual(values = custom_palette)
+  
+  tiff(paste0(out_path, options$save_name, "_CF_boxplot",".tiff"), width=7.5, height=5, unit="in", res=300)
+  print(gb)
+  dev.off()
+  

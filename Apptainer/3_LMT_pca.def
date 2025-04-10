@@ -43,7 +43,7 @@ From: rocker/r-base:latest
   R -e "install.packages('ggcorrplot', dependencies = TRUE)"
   R -e "install.packages('FactoMineR', dependencies = TRUE)"
   R -e "install.packages('factoextra', dependencies = TRUE)"
-
+  R -e "install.packages('ggforce', dependencies = TRUE)"
   R -e "BiocManager::install('M3C')"
 
 

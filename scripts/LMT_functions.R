@@ -384,3 +384,97 @@ escape_spaces <- function(file_path) {
   return(escaped_path)
 }
 
+# Function to add behaviour meta data
+add_event_meta = function(df){
+  #colnames(df)[colnames(df) == "V1"] <- "component"
+  df$component <- row.names(df)
+  df$behaviour <- apply(df, 1, function(x){
+    bev <- strsplit(as.character(x["component"]), "\\.")[[1]][1]
+    return(bev)})
+  df$behaviour.group <- apply(df, 1, function(x){
+    check <- as.character(x["behaviour"])
+    filtered_df <- event_types[grep(check, event_types$NAME), ]
+    keep <- filtered_df$Behaviour.Type[1]
+    return(keep)})
+  df$pca.group <- apply(df, 1, function(x){
+    spl <- strsplit(as.character(x["component"]), "\\.")[[1]][2]
+    return(spl)})
+  df <- merge(df, event_types[c("NAME","Event_Type")], by.x = "behaviour", by.y = "NAME")
+  return(df)
+}
+
+# Assign LMT Event Meta Data
+event_types <- data.frame("Behaviour.Type"=c("Body Configuration",  "Body Configuration",  "Body Configuration",  "Body Configuration",  "Body Configuration",  "Isolated Behaviour", "Isolated Behaviour",  "Isolated Behaviour", "Contact - Behaviour", "Contact - Behaviour", "Contact - Behaviour", "Contact - Behaviour", "Contact - Position", "Contact - Position", "Contact - Position", "Contact - Position", "Social Configuration", "Social Configuration", "Social Configuration", "Social Configuration", "Social Configuration", "Social Configuration", "Social Approach","Social Approach","Social Approach", "Social Approach", "Social Approach", "Social Approach" , "Social Escape",  "Social Escape",  "Social Escape",  "Social Escape", "Contact - Sequence", "Contact - Sequence", "Social Configuration", "Social Configuration", "Cage Position", "Cage Position", "Cage Position", "Cage Position"), 
+                          "NAME"=c("Look down","Stop","Rearing","WallJump","SAP","Move isolated","Stop isolated","Rear isolated","Move in contact","Rear in contact","Contact","Stop in contact","Side by side Contact","Side by side Contact, opposite way", "Oral-oral Contact","Oral-genital Contact","Group2","Group3","Train2","Train3","Train4","FollowZone Isolated","Social approach","Approach","Approach rear","Approach contact","Group 3 make","Group 4 make","Get away","Break contact","Group 3 break","Group 4 break","seq oral oral - oral genital","seq oral geni - oral oral", "Nest3_", "Nest4_", "Center Zone", "Periphery Zone", "Rear at periphery", "Rear in centerWindow"),
+                          "Event_Type"=c("Head down","Stop","Rearing","Jump","SAP","Move alone","Stop alone","Rear isolated","Move contact","Rear contact","Contact","Stop in contact","Side-side","Side-side\nopposite", "Nose-nose","Nose-anogenital","Group of 2","Group of 3","Train of 2","Train of 3","Train of 4","Follow","Social approach","Approach from front","Approach from rear","Make Contact","Make a group of 3","Make a group of 4","Get away","Break contact","Break group of 3","Break group of 4","Seq o-o o-g","Seq o-g o-o", "Nest of 3", "Nest of 4", "Center Zone", "Periphery Zone", "Rear at\nperiphery", "Rear in\ncenter window"))
+custom_palette <- c("Body Configuration"="#E69F00",
+                    "Isolated Behaviour"="#3FAE4A",
+                    "Contact - Position"="#0000FF",
+                    "Contact - Behaviour"="#00CCCC",
+                    "Social Configuration"="#FFFF99",
+                    "Social Approach"="#B73D3D",
+                    "Social Escape"="#FF99FF",
+                    "Contact - Sequence"="#9413CB",
+                    "Cage Position"="#444444")
+
+# Function to build contributing factor circle plots
+contrib_circle_plots = function(pca_data, out_path, save_name){
+  # Get contributing variable data
+  data <- as.data.frame(get_pca_var(pca_data)$contrib)
+  data <- add_event_meta(data)
+  data$Dim.comb <- apply(data, 1, function(x){n <- sqrt(as.numeric(x["Dim.1"])^2 + as.numeric(x["Dim.2"])^2)})
+   
+  # Assign constants
+  ylim <- max(data$Dim.comb)
+  av <- c("1"=541, "2"=1082, "3"=1443, "4"=1804, "5"=2105, "6"=2346, "7"=2527, "8"=3248, "9"=3249, "10"=301)
+ 
+  # Build plots for each behaviour group
+  for (x in unique(data$behaviour.group)){
+    print(x)
+    col <- custom_palette[x]
+    dp <- data[data$pca.group == "event_count_nz", c("Event_Type", "Dim.comb", "behaviour.group")]
+    dp <- dp[dp$behaviour.group == x, c("Event_Type", "Dim.comb")]
+    dp$Dim.comb.std <- dp$Dim.comb/ylim #*100
+    print(dp)
+    
+    # Compute positions in a circular layout
+    n <- nrow(dp)
+    theta <- seq(0, 2 * pi, length.out = n + 1)[-1]  # Equally spaced angles
+    
+    # Assign positions 
+    if (nrow(dp) <= 3) dis <- 1 else if ((nrow(dp) <= 5)) dis <- 3 else dis <- 10
+    dp$x <- cos(theta) * (max(dp$Dim.comb) + dis)  # Radius of 5 for spacing
+    dp$y <- sin(theta) * (max(dp$Dim.comb) + dis) 
+    
+    # Central circle (fixed position)
+    center <- data.frame(x = 0, y = 0, Dim.comb = ylim, Dim.comb.std = 100, Event_Type = "")
+    
+    # Combine data
+    all_data <- rbind(center, dp)
+    all_data$alpha <- ifelse(all_data$Event_Type == "", 0, 0.6)
+    alpha_vec <- c(0, rep(0.9,av[nrow(dp)]))
+    col_vec <- c("white", rep("#303030",av[nrow(dp)]))
+    
+    # Plot
+    gg <- ggplot(all_data) +
+      geom_circle(aes(
+        x0 = x, y0 = y, r = Dim.comb, 
+        fill = Dim.comb  # Map color and size to Dim.1
+      ), alpha = alpha_vec, color=col_vec, linewidth = 0.8) +
+      geom_text(aes(x = x, y = y-(Dim.comb*1.1+1), label = Event_Type), size = 4) +  # Add labels
+      coord_fixed() +  # Keep aspect ratio equal
+      scale_fill_gradient(low = "white", high = col, name = "Contrib", limits = c(0, ylim)) +  # Gradient fill
+      theme_void() + 
+      theme(legend.position = "bottom") + #scale_fill_continuous()
+      ggtitle(x)  # Replace with x if it's a  dynamic title
+
+    svg(paste0(out_path, save_name, "_CF_circle_plot_", gsub(" ", "", x),".svg"), width=7.5, height=5)
+    print(gg)
+    dev.off()
+    
+    tiff(paste0(out_path, save_name, "_CF_circle_plot_", gsub(" ", "", x),".tiff"), width=7.5, height=5, unit="in", res=300)
+    print(gg)
+    dev.off()
+  }
+  return(data)
+}

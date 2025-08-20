@@ -32,6 +32,14 @@ file_base <- tools::file_path_sans_ext(basename(opt$file))
 # Connect to the SQLite database
 conn <- dbConnect(SQLite(), dbname = opt$file)
 
+path <- paste0(opt$output, "tables/")
+if (!dir.exists(path)) {
+  dir.create(path, recursive = FALSE)
+  message("Directory created: ", path)
+} else {
+  message("Directory already exists: ", path)
+}
+
 # Define the tables to extract
 tables <- c("ANIMAL", "EVENT")
 
@@ -43,7 +51,7 @@ extract_and_save <- function(table_name) {
     data <- dbReadTable(conn, table_name)
 
     # Define the output CSV file name
-    csv_file <- paste0(opt$output, file_base, "_", table_name, "_", opt$save_name, ".csv")
+    csv_file <- paste0(path, file_base, "_", table_name, "_", opt$save_name, ".csv")
 
     # Save the table to a CSV file
     write.csv(data, csv_file, row.names = FALSE)

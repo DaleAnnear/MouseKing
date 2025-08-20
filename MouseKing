@@ -5,8 +5,8 @@
 # Date: 2025/01/23
 
 globdir=$(dirname "$(realpath "$0")")
-# Function to run commands
 
+# Function to run commands
 run_command() {
     command="$1"
     echo "Running command: $command"
@@ -70,13 +70,14 @@ royale() {
         echo "  -o  Path to the desired output directory (required)"
         echo "  -f  Frame filter - DEFAULT RECOMMENDED (default: 15)"
         echo "  -t  Time file - DEFAULT RECOMMENDED (default: NULL)"
+        echo "  -r  Rebuild (default: TRUE)"
         echo ""
         echo "Example:"
         echo "  MouseKing royale -i Example/data/input.txt -m Example/data/Example_manifest.txt -s MouseKing_Example -o Example/results"
         return
     fi
 
-    while getopts "i:m:s:o:f:t:" opt; do
+    while getopts "i:m:s:o:f:t:r:" opt; do
         case "$opt" in
             i) input_file="$OPTARG" ;;
             m) manifest="$OPTARG" ;;
@@ -84,12 +85,14 @@ royale() {
             o) output="$OPTARG" ;;
             f) frame_filter="$OPTARG" ;;
             t) time_file="$OPTARG" ;;
+            r) rebuild="$OPTARG" ;;
             *) echo "Invalid option"; exit 1 ;;
         esac
     done
 
     frame_filter="${frame_filter:-15}"
     time_file="${time_file:-NULL}"
+    rebuild="${rebuild:-"TRUE"}"
 
     if [[ -z "$input_file" || -z "$manifest" || -z "$save_name" || -z "$output" ]]; then
         echo "Error: One or more required argument are missing. Please see --help for usage."
@@ -97,7 +100,11 @@ royale() {
     fi
 
     echo "######    Performing full MouseKing pipeline  ######"
-    run_cmd="nextflow run '$globdir/Nextflow/MouseKing_main.nf' --input_file '$input_file' --manifest '$manifest' --save_name '$save_name' --output '$output' --time_file '$time_file' --event_frame_filter '$frame_filter'"
+    if [ "$rebuild" == "TRUE" ]; then
+        run_cmd="nextflow run '$globdir/Nextflow/MouseKing_main.nf' --input_file '$input_file' --manifest '$manifest' --save_name '$save_name' --output '$output' --time_file '$time_file' --event_frame_filter '$frame_filter'"
+    elif [ "$rebuild" == "FALSE" ]; then
+        run_cmd="nextflow run '$globdir/Nextflow/MouseKing_royale_norebuild.nf' --input_file '$input_file' --manifest '$manifest' --save_name '$save_name' --output '$output' --time_file '$time_file' --event_frame_filter '$frame_filter'"
+    fi    
     run_command "$run_cmd"
 }
 
@@ -285,10 +292,10 @@ pca() {
 }
 
 install() {
-         if ["$1" == "--help" ]; then
+    if [["$1" == "--help" ]]; then
         echo "Usage: MouseKing install"
         echo ""
-        return
+        return 0
     fi
 
     echo "Installing MouseKing Environment..."

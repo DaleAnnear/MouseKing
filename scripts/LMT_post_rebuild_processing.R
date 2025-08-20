@@ -24,11 +24,17 @@ if (is.null(options$cage_manifest)) stop("Error: Argument --cage_manifest is req
 if (is.null(options$save_name)) stop("Error: Argument --save_name is required. Use --help for usage information.")
 if (is.null(options$output)) stop("Error: Argument --output is required. Use --help for usage information.")
 
-outpath <- ensure_trailing_slash(options$output)
-options$output <- normalizePath(options$output)
-options$input_dir <- normalizePath(options$input_dir)
+outpath <- ensure_trailing_slash(normalizePath(options$output))
+outpath <- paste0(outpath, "processed/")
+if (!dir.exists(outpath)) {
+  dir.create(outpath, recursive = FALSE)
+  message("Directory created: ", outpath)
+} else {
+  message("Directory already exists: ", outpath)
+}
+options$input_dir <- ensure_trailing_slash(normalizePath(options$input_dir))
 options$cage_manifest <- normalizePath(options$cage_manifest)
-options$time_file <- normalizePath(options$time_file)
+if (!is.null(options$time_file)) options$time_file <- normalizePath(options$time_file)
 
 if (options$time_file %in% c("NULL", "NA")) options$time_file <- NULL
 
@@ -44,7 +50,7 @@ mouse_mani <- data.frame(fread(file=options$cage_manifest, stringsAsFactors = FA
 if (is.null(options$time_file) == F) tfile <- data.frame(fread(options$time_file))
 
 # Read in and aggregate event counts
-read_and_save_csv(options$input_dir)
+read_and_save_csv(paste0(options$input_dir))
 if (is.null(options$time_file) == F) event_times(tfile) else event_times()
 aggregate_on_events(frame_filter)
 anno_and_clean(mouse_mani)

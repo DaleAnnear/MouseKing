@@ -3,6 +3,7 @@ import sys
 import os
 
 def check_integrity(database_path):
+    print(f"Processing base: {database_path}", file=sys.stdout)
     try:
          # Check if the database file exists
         if not os.path.exists(database_path) or not database_path.endswith(".sqlite"):

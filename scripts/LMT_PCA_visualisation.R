@@ -26,24 +26,27 @@ parser <- OptionParser(option_list = option_list)
 options <- parse_args(parser)
 
 # Check for required arguments
-if (is.null(options$input_dir)) stop("Error: Argument --input_dir is required. Use --help for usage information.")
-if (is.null(options$cage_manifest)) stop("Error: Argument --cage_manifest is required. Use --help for usage information.")
-if (is.null(options$save_name)) stop("Error: Argument --save_name is required. Use --help for usage information.")
-if (is.null(options$output)) stop("Error: Argument --output is required. Use --help for usage information.")
+required <- c("input_dir", "cage_manifest", "save_name", "output")
+require_options(options, required)
 
 # Clear workspace and import functions
 gc()
 
 # Read in files
 mouse_mani <- data.frame(fread(options$cage_manifest))
-events <- data.frame(fread(list.files(path = options$input_dir, pattern = "*All_Events_filter_frames_.*\\.csv$", full.names = TRUE)))
-events_agg <- data.frame(fread(list.files(path = options$input_dir, pattern = "*Event_Counts_with_duration_filter_frames_.*\\.csv$", full.names = TRUE)))
-cage_durs <- data.frame(fread(list.files(path = options$input_dir, pattern = "*Cage_Events_means_filter_frames_.*\\.csv$", full.names = TRUE)))
-cage_counts <- data.frame(fread(list.files(path = options$input_dir, pattern = "*Cage_Count_means_filter_frames_.*\\.csv$", full.names = TRUE)))
+events <- data.frame(fread(list.files(path = options$input_dir, pattern = "*All_Events_filter_frames_.*\\.csv$", full.names = TRUE, recursive = TRUE)))
+events_agg <- data.frame(fread(list.files(path = options$input_dir, pattern = "*Event_Counts_with_duration_filter_frames_.*\\.csv$", full.names = TRUE, recursive = TRUE)))
+cage_durs <- data.frame(fread(list.files(path = options$input_dir, pattern = "*Cage_Events_means_filter_frames_.*\\.csv$", full.names = TRUE, recursive = TRUE)))
+cage_counts <- data.frame(fread(list.files(path = options$input_dir, pattern = "*Cage_Count_means_filter_frames_.*\\.csv$", full.names = TRUE, recursive = TRUE)))
 
 events_by_cage <- agg_all_events(events, mouse_mani)
 events_by_cage <- events_by_cage[!(events_by_cage$NAME %in% c("Detection", "Head detected")),]
 out_path <- ensure_trailing_slash(options$output)
+
+pcapath <- paste0(out_path, "pca/")
+ensure_dir(pcapath)
+plotpath <- paste0(out_path, "plots/")
+ensure_dir(plotpath)
 
 # Cage Means
 cage_sds <- agg_SD(events_agg)
@@ -87,8 +90,9 @@ grp_cols <- c("#00AFBB", "#FC4E07", "darkorchid1", "#E7B800", "#0CB702", "#CC79A
 # Build PCA Plots
 for (x in nz_groups){
   print(paste0("CONSTRUCTING PCA: ", " ", options$save_name, " - ", x))
-  if (x == "all") numerical_data <- df_wide[3:ncol(df_wide)]
-    else {
+  if (x == "all") { numerical_data <- df_wide[3:ncol(df_wide)]
+                    fwrite(numerical_data, paste0(pcapath, options$save_name, "_Normalised_Input_Data", ".csv"), sep=";", row.names = T, col.names = T, quote = F)
+  } else {
       nz_names <- grep(x, names(df_wide))
       nz_names <- names(df_wide)[grep(x, names(df_wide))]
       numerical_data <- df_wide[nz_names]
@@ -97,10 +101,18 @@ for (x in nz_groups){
   numerical_data <- numerical_data[, !sapply(numerical_data, function(col) any(is.infinite(col)))]
   
   print(numerical_data)
-  # PCA
+  # Calculate PCA data
   data.pca <- prcomp(numerical_data)
-     # PCA
-    tiff(paste0(out_path, options$save_name, "_", x, "_PCA.tiff"), units="in", width=7.5, height=5, res=300)
+  pc_df <- as.data.frame(data.pca$x)
+  pc_df$Sample <- rownames(numerical_data)
+  group_df <- df_wide[c("RFID")]
+  group_df$Sample <- rownames(df_wide)
+  group_df$Genotype <- df_wide$Genotype
+  pc_group_df <- left_join(pc_df, group_df, by = "Sample")
+  pc_group_df <- pc_group_df[, c("Sample", "RFID", "Genotype", setdiff(names(pc_group_df), c("Sample", "RFID", "Genotype")))]
+  
+     # Plot PCA
+    tiff(paste0(plotpath, options$save_name, "_", x, "_PCA.tiff"), units="in", width=7.5, height=5, res=300)
     groups <- as.factor(df_wide$Genotype)
     plot_ind <- fviz_pca_ind(data.pca,
                col.ind = groups, # color by groups
@@ -113,7 +125,7 @@ for (x in nz_groups){
     dev.off()
     
     # Contributing Factors Arrows 
-    tiff(paste0(out_path, options$save_name, "_", x, "_CF.tiff"), units="in", width=7.5, height=5, res=300)
+    tiff(paste0(plotpath, options$save_name, "_", x, "_CF.tiff"), units="in", width=7.5, height=5, res=300)
     plot_var <- fviz_pca_var(data.pca,
                col.var = "contrib", # Color by contributions to the PC
                gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
@@ -122,11 +134,12 @@ for (x in nz_groups){
     dev.off()
 }
   
-fwrite(as.data.frame(data.pca$rotation), paste0(out_path, options$save_name, "_PCA_data", ".csv"), sep=",", row.names = T, col.names = T, quote = F)
+fwrite(pc_group_df, paste0(pcapath, options$save_name, "_PCA_data", ".csv"), sep=";", row.names = T, col.names = T, quote = F)
 
   # Contributing Factors Circles
   contrib_df <- contrib_circle_plots(data.pca, out_path, options$save_name)
-  contrib_df <- contrib_df[contrib_df$pca.group == "event_count_nz", c("component","Dim.1", "Dim.2", "Dim.comb", "behaviour","behaviour.group", "pca.group", "Event_Type")]
+  contrib_df <- contrib_df[contrib_df$pca.group == "event_count_nz", c("component","Dim.1", "Dim.2", "Dim.3", "Dim.4", "Dim.5", "Dim.comb", "behaviour","behaviour.group", "pca.group", "Event_Type")]
+  fwrite(contrib_df, paste0(pcapath, options$save_name, "_PCA_loading_data", ".csv"), sep=";", row.names = F, col.names = T, quote = F)
   
   # Contributing Factors Boxplots
   gb <- ggplot(contrib_df, aes(x = behaviour.group, y = Dim.comb, fill = behaviour.group)) +
@@ -135,7 +148,7 @@ fwrite(as.data.frame(data.pca$rotation), paste0(out_path, options$save_name, "_P
     labs(x = "Behavior Group", y = "Contrib") +
     theme(axis.text.x = element_blank(), axis.title.x = element_blank()) + scale_fill_manual(values = custom_palette)
   
-  tiff(paste0(out_path, options$save_name, "_CF_boxplot",".tiff"), width=7.5, height=5, unit="in", res=300)
+  tiff(paste0(plotpath, options$save_name, "_CF_boxplot",".tiff"), width=7.5, height=5, unit="in", res=300)
   print(gb)
   dev.off()
   

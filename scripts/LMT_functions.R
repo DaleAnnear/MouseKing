@@ -2,7 +2,7 @@
 # Function to read all CSV files in a directory and save each as a separate data frame
 read_and_save_csv = function(directory) {
   # List all CSV files in the directory
-  csv_files <- list.files(directory, pattern = ".*(ANIMAL|EVENT).*\\.csv$", full.names = TRUE)
+  csv_files <- list.files(directory, pattern = ".*(ANIMAL|EVENT).*\\.csv$", full.names = TRUE, recursive = TRUE)
   print(paste0("The folllowing data files were located at directroy ", directory))
   print(csv_files)
   
@@ -412,7 +412,7 @@ MB <- data.frame("Behaviour.Type"=c(rep("Motor Behavior & Body Posture", 8)),
                  "Event_Type"=c("Head down", "Stop", "Rearing", "Jump", "SAP", 	"Move alone", "Stop alone", "Rear alone") )
 PSC <- data.frame("Behaviour.Type"=c(rep("Physical Social Contact", 10)),
                  "NAME"=c("Move in contact","Rear in contact","Contact","Stop in contact","Side by side Contact","Side by side Contact, opposite way","Oral-oral Contact","Oral-genital Contact","seq oral oral - oral genita", "seq oral geni - oral oral"),
-                 "Event_Type"=c("Move contact","Rear contact","Contact","Stop in contact","Side-side","Side-side\nopposite","Nose-nose","Nose-anogenital","Seq o-g","Seq o-g o-o") )
+                 "Event_Type"=c("Move contact","Rear contact","Contact","Stop in contact","Side-side","Side-side opposite","Nose-nose","Nose-anogenital","Seq o-g","Seq o-g o-o") )
 IA <- data.frame("Behaviour.Type"=c(rep("Initiation & Approach", 7)),
                  "NAME"=c("Social approach","Approach","Approach rear","Approach contact","Group 3 make","Group 4 make", "FollowZone Isolated"),
                  "Event_Type"=c("Social approach","Approach from front","Approach from rear","Make Contact","Make group of 3" ,"Make group of 4", "Follow") )
@@ -449,6 +449,7 @@ contrib_circle_plots = function(pca_data, out_path, save_name){
     dp$Dim.comb.std <- dp$Dim.comb/ylim #*100
     
     # Compute positions in a circular layout
+    n <- nrow(dp)
     theta <- seq(0, 2 * pi, length.out = n + 1)[-1]  # Equally spaced angles
     
     # Assign positions 
@@ -470,24 +471,58 @@ contrib_circle_plots = function(pca_data, out_path, save_name){
     all_data$Dim.comb.scaled <-  all_data$Dim.comb / max(all_data$Dim.comb)
     
     # Plot
-    gg <- ggplot(all_data) +
-      geom_circle(aes(
-        x0 = x, y0 = y, r = Dim.comb.scaled*3, 
-        fill = Dim.comb.scaled  # Map color and size to Dim.1
-      ), alpha = alpha_vec, color=col_vec, linewidth = 0.8) +
-      geom_text(aes(x = x, y = y-(Dim.comb.scaled*1.3+2), label = Event_Type), size = 3) +  # Add labels
-      coord_fixed() +  # Keep aspect ratio equal
-      scale_fill_gradient(low = "white", high = col, name = "Contrib", limits = c(0, ylim)) +  # Gradient fill
-      theme_void() + 
-      theme(legend.position = "bottom") + #scale_fill_continuous()
-      ggtitle(x)  # Replace with x if it's a  dynamic title
+    #gg <- ggplot(all_data) +
+    #  geom_circle(aes(
+    #    x0 = x, y0 = y, r = Dim.comb.scaled*3, 
+    #    fill = Dim.comb.scaled  # Map color and size to Dim.1
+    #  ), alpha = alpha_vec, color=col_vec, linewidth = 0.8) +
+    #  geom_text(aes(x = x, y = y-(Dim.comb.scaled*1.3+2), label = Event_Type), size = 3) +  # Add labels
+    #  coord_fixed() +  # Keep aspect ratio equal
+    #  scale_fill_gradient(low = "white", high = col, name = "Contrib", limits = c(0, ylim)) +  # Gradient fill
+    #  theme_void() + 
+    #  theme(legend.position = "bottom") + #scale_fill_continuous()
+    #  ggtitle(x)  # Replace with x if it's a  dynamic title
 
     savepath <-  paste0(out_path, save_name, "_CF_circle_plot_", gsub(" ", "", x))
     savepath <- gsub("&", "", savepath)
     
-    tiff(paste0(savepath,".tiff"), width=10, height=7.5, unit="in", res=300)
-    print(gg)
-    dev.off()
+    #tiff(paste0(savepath,".tiff"), width=10, height=7.5, unit="in", res=300)
+    #print(gg)
+    #dev.off()
   }
   return(data)
+}
+
+# Assuming df_beh contains behavioral variables and Genotype column
+get_cohen_d <- function(var_name) {
+  x <- df_beh %>% filter(Genotype == "WT") %>% pull(var_name)
+  y <- df_beh %>% filter(Genotype == "KO") %>% pull(var_name)
+  d <- cohen.d(x, y)$estimate
+  return(d)
+}
+
+# Scalable way to validate required options
+require_options <- function(options, required) {
+  missing <- required[vapply(required, function(x) {
+    is.null(options[[x]]) || identical(options[[x]], "")
+  }, logical(1))]
+
+  if (length(missing)) {
+    stop(sprintf(
+      "Missing required argument%s: %s\nUse --help for usage information.",
+      ifelse(length(missing) > 1, "s", ""),
+      paste(paste0("--", missing), collapse = ", ")
+    ), call. = FALSE)
+  }
+}
+
+# Create a directory if it doesn't exist
+ensure_dir <- function(path, recursive = FALSE) {
+  if (!dir.exists(path)) {
+    dir.create(path, recursive = recursive)
+    message("Directory created: ", normalizePath(path, mustWork = FALSE))
+  } else {
+    message("Directory already exists: ", normalizePath(path, mustWork = FALSE))
+  }
+  invisible(path)
 }

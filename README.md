@@ -1,6 +1,6 @@
 <p align="center">
   <a href="" rel="noopener">
- <img width=300px height=300px src="https://github.com/DaleAnnear/MouseKing/blob/main/LICENSE/imgs/logo.png" alt="Project logo"></a>
+ <img width=350px height=350px src="https://github.com/DaleAnnear/MouseKing/blob/main/LICENSE/imgs/logo2.png" alt="Project logo"></a>
 </p>
 
 <h3 align="center">MouseKing</h3>
@@ -147,21 +147,8 @@ sudo apptainer build 3_LMT_pca.sif  3_LMT_pca.def
 
 ## 🔧 Running the tests <a name = "tests"></a>
 
-Navigate into the MouseKing Directory.
-
-```
-cd MouseKing
-```
-
 You can test if the the MouseKing pipeline is installed correctly by executing the below command.  
-**NOTE:** *The below command **MUST** be executed within the MouseKing directory ($YOUR_PATH/MouseKing) to be sucessful.*
-
-```
-MouseKing royale -i Example/data/input.txt -m Example/data/manifest.txt -s MouseKing_Example -o Example/results
-```
-
-**ALTERNATIVELY:**  
-The below command can be run from anywhere, but the full path must be provided for the input arguments.
+**NOTE:** *When using MouseKing you **MUST** supply full paths for the supplied files and directories to be utilised during your run. This is due to the mounting feature of the apptainer images.*
 
 ```
 MouseKing royale -i $YOUR_PATH/MouseKing/Example/data/input.txt -m $YOUR_PATH/MouseKing/Example/data/Example_manifest.txt -s MouseKing_Example -o $YOUR_PATH/MouseKing/Example/results

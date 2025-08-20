@@ -32,7 +32,7 @@ process CheckIntegrity {
 
     script:
     """
-    apptainer run '${params.appimage_1_LMT}' CheckIntegrity '${input_file}' > 'LMT_1.1_CheckIntegrity_log-${params.save_name}_${input_file.simpleName}.txt'
+    apptainer run --bind ${input_file.toRealPath()}:${input_file.toRealPath()} '${params.appimage_1_LMT}' CheckIntegrity '${input_file}' > 'LMT_1.1_CheckIntegrity_log-${params.save_name}_${input_file.simpleName}.txt'
     """
 }
 
@@ -50,7 +50,7 @@ process RebuildScript {
 
     script:
     """
-    apptainer run '${params.appimage_1_LMT}' RebuildAllEvents -f '${input_file}' > 'LMT_1.2_RebuildAllEvents_log-${params.save_name}_${input_file.simpleName}.txt'
+    apptainer run --bind ${input_file.toRealPath()}:${input_file.toRealPath()} '${params.appimage_1_LMT}' RebuildAllEvents -f '${input_file}' > 'LMT_1.2_RebuildAllEvents_log-${params.save_name}_${input_file.simpleName}.txt'
     """
 }
 
@@ -67,7 +67,7 @@ process ExtractTables {
 
     script:
     """
-    apptainer run '${params.appimage_1_LMT}' GetTables -f '${input_file}' -s ${params.save_name} -o '${params.output}' > 'LMT_1.3_ExtractTables_log-${input_file.simpleName}_${params.save_name}.txt'
+    apptainer run --bind ${input_file.toRealPath()}:${input_file.toRealPath()} --bind ${params.output}:${params.output} '${params.appimage_1_LMT}' GetTables -f '${input_file}' -s ${params.save_name} -o '${params.output}' > 'LMT_1.3_ExtractTables_log-${input_file.simpleName}_${params.save_name}.txt'
     """
 }
 
@@ -84,7 +84,7 @@ process PostProcessing {
     
     script:
     """
-    apptainer run '${params.appimage_2_LMT}' -i '${params.output}' -c '${params.manifest}' -s '${params.save_name}' -t '${params.time_file}' -f ${params.event_frame_filter} -o '${params.output}' > 'LMT_2_PostProcessing_log-${params.save_name}.txt'
+    apptainer run --bind ${params.output}:${params.output} --bind ${params.manifest}:${params.manifest} '${params.appimage_2_LMT}' -i '${params.output}' -c '${params.manifest}' -s '${params.save_name}' -t '${params.time_file}' -f ${params.event_frame_filter} -o '${params.output}' > 'LMT_2_PostProcessing_log-${params.save_name}.txt'
     """
 }
 
@@ -97,11 +97,28 @@ process pcaVisualisation {
         path PostProcessing_log
 
     output:
-        file "LMT_3_PCA_visualisation_log-${params.save_name}.txt"
+        file "LMT_3.1_PCA_visualisation_log-${params.save_name}.txt"
     
     script:
     """
-    apptainer run '${params.appimage_3_LMT}' -i '${params.output}' -c '${params.manifest}' -s '${params.save_name}' -o '${params.output}' > 'LMT_3_PCA_visualisation_log-${params.save_name}.txt'
+    apptainer run --bind ${params.output}:${params.output} --bind ${params.manifest}:${params.manifest} '${params.appimage_3_LMT}' PCA -i '${params.output}' -c '${params.manifest}' -s '${params.save_name}' -o '${params.output}' > 'LMT_3.1_PCA_visualisation_log-${params.save_name}.txt'
+    """
+}
+
+process CheckTheStatistaks {
+    container 'apptainer'
+
+    publishDir "${params.output}/logs", mode: 'copy'
+
+    input:
+        path pcaVisualisation_log
+
+    output:
+        file "LMT_3.2_PCA_statistics_log-${params.save_name}.txt"
+    
+    script:
+    """
+    apptainer run --bind ${params.output}:${params.output} --bind ${params.manifest}:${params.manifest} '${params.appimage_3_LMT}' BigShaq -i '${params.output}' -s '${params.save_name}' -o '${params.output}' > 'LMT_3.2_PCA_statistics_log-${params.save_name}.txt'
     """
 }
 
@@ -129,4 +146,5 @@ workflow {
     //Run step 3 of the LMT pipeline
     pca_output = pcaVisualisation(processing_output)
 
+    bigshaq_output = CheckTheStatistaks(pca_output)
 }

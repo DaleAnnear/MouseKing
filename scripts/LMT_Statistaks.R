@@ -40,7 +40,7 @@ ensure_dir(plotpath)
 
 df_beh <- df_beh %>% select(V1, contains("count_nz"))
 df_beh <- df_beh %>% rename(Sample = V1)
-df_beh <- merge(df_beh, df[c("Sample","RFID","Genotype")])
+df_beh <- merge(df_beh, df[c("Sample","RFID","Condition")])
 
 # Data treatment
 df_ro <- data.frame(fread(list.files(path = options$input_dir, pattern = "PCA_loading_data.csv", full.names = TRUE, recursive = TRUE)[1], sep = ";", fill=T))
@@ -57,7 +57,7 @@ df_ro$Dim.comb <- as.numeric(df_ro$Dim.comb)
 # Step 1: Permform manova on top ranked PC's
 pc_cols <- grep("^PC\\d+$", names(df), value = TRUE)
 pc_cols <- pc_cols[1:5]  # just the top 5 PCs
-manova_formula <- as.formula(paste("cbind(", paste(pc_cols, collapse = ", "), ") ~ Genotype"))
+manova_formula <- as.formula(paste("cbind(", paste(pc_cols, collapse = ", "), ") ~ Condition"))
 manova_result <- manova(manova_formula, data = df)
 
 manova_summary <- capture.output(summary(manova_result))
@@ -70,7 +70,7 @@ writeLines("\n", con)
 
 # ANOVA for all PC
 results <- sapply(paste0("PC", 1:as.numeric(gsub("PC", "", names(df[ncol(df)])))), function(pc) {
-  model <- aov(as.formula(paste(pc, "~ Genotype")), data = df)
+  model <- aov(as.formula(paste(pc, "~ Condition")), data = df)
   summary(model)[[1]][["Pr(>F)"]][1]  # extract p-value
 })
 writeLines("##### ANOVA RESULT #####", con)
@@ -108,7 +108,7 @@ for (pc in names(sig_pcs)) {
   print(p_val)
   
   # Create basic boxplot
-  p <- ggplot(df, aes_string(x = "Genotype", y = pc, fill = "Genotype")) +
+  p <- ggplot(df, aes_string(x = "Condition", y = pc, fill = "Condition")) +
     geom_boxplot() +
     theme_minimal() +
     ggtitle(paste(pc, "by Condition")) +
@@ -173,7 +173,7 @@ for (x in list_siG_pcs){
       plot.background = element_rect(fill = "white", color = NA)
     ) +
     labs(
-      title = paste0("Projected Genotype Effect on PC", pc," by Behaviour"),
+      title = paste0("Projected Condition Effect on PC", pc," by Behaviour"),
       x = "Behaviour",
       y = paste0("\nProjected Effect Size (Cohen's d × Loading on PC",pc,")"),
       fill = "Behaviour Group"

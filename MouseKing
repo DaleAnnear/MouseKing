@@ -292,15 +292,34 @@ pca() {
 }
 
 install() {
-    if [["$1" == "--help" ]]; then
-        echo "Usage: MouseKing install"
-        echo ""
+    # Help
+    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+        echo "Usage: MouseKing install [local|online]"
+        echo
+        echo "Modes:"
+        echo "  local   (default) Builds the required apptainer images locally from the generated def files"
+        echo "  online  Fetchs the required apptainer images online from cloud.sylabs.io"
         return 0
     fi
 
-    echo "Installing MouseKing Environment..."
+    # Parse mode with default
+    mode="${1:-local}"
+
+    # Validate mode
+    case "$mode" in
+        local|online) ;;
+        *)
+            echo "Error: invalid mode '$mode'. Expected 'local' or 'online'." >&2
+            echo "Try: MouseKing install [local|online]" >&2
+            return 2
+            ;;
+    esac
+
+    echo "Installing MouseKing Environment ($mode mode)..."
     echo "Please be patient <3"
-    run_cmd="python3 scripts/LMT_install.py '$globdir'"
+
+    # Build and run the command (pass mode to Python as a flag)
+    run_cmd="python3 scripts/LMT_install.py \"$globdir\" --mode \"$mode\""
     run_command "$run_cmd"
 }
 

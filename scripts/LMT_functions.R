@@ -73,7 +73,7 @@ aggregate_on_events = function(frame_filter) {
   assign("all_events", aem, envir = .GlobalEnv)
 }
 
-# Merge event counts together and attontate with cage and genotype info
+# Merge event counts together and attontate with cage and Condition info
 anno_and_clean = function(mani){
   
   remove_events <- c("Detection", "Group4", "Head detected", "MACHINE LEARNING ASSOCIATION", "RFID ASSIGN ANONYMOUS TRACK", "RFID MATCH", "RFID MISMATCH", "Train4")
@@ -102,14 +102,14 @@ Libraries = function(){
   for (x in list.of.packages) suppressMessages(library(x, character.only = TRUE))
 }
 
-# Perform stats for event counts by genotype
+# Perform stats for event counts by Condition
 statistacks_GT = function(counts_df, plot_df){
   if (length(unique(counts_df$Cage)) > 1){ # Run linear mixed model
     plot_df <- plot_df[plot_df$N > 4,]
     plot_df$test <- apply(plot_df, 1, function(x){
       myData <- counts_df[counts_df$NAME == x[1],]
-      model<-lmer(Count~Genotype+(1|Cage),data=myData)
-      modelNull<-update(model,.~.-Genotype)
+      model<-lmer(Count~Condition+(1|Cage),data=myData)
+      modelNull<-update(model,.~.-Condition)
       pValue<-KRmodcomp(model,modelNull)$test$p.value[1]
       estimate<-summary(model)$coef[2,1]
       st.error<-summary(model)$coef[2,2]
@@ -301,25 +301,25 @@ cage_means = function(events, mm){
   ccm_df <- do.call(data.frame, ccm_df)
   names(ccm_df) <- c("NAME", "Cage", "Event_Counts", "Event_Mean", "Event_SD")
   
-  count <- aggregate(FRAME.DUR ~ NAME + Genotype + Cage, data = df, FUN = function(x) length = length(x))
+  count <- aggregate(FRAME.DUR ~ NAME + Condition + Cage, data = df, FUN = function(x) length = length(x))
   count <- do.call(data.frame, count)
-  names(count) <- c("NAME", "Genotype", "Cage", "Event_Count")
+  names(count) <- c("NAME", "Condition", "Cage", "Event_Count")
   count_tot <- aggregate(FRAME.DUR ~ NAME + Cage, data = df, FUN = function(x)  length = length(x))
   count_tot <- do.call(data.frame, count_tot)
   names(count_tot) <- c("NAME", "Cage", "Event_Count")
-  count_tot$Genotype <- "All"
+  count_tot$Condition <- "All"
   countbind <- rbind(count, count_tot)
   
-  dur <- aggregate(FRAME.DUR ~ NAME + Genotype + Cage, data = df, FUN = function(x) c(sum = sum(x), mean = mean(x), sd = sd(x)))
+  dur <- aggregate(FRAME.DUR ~ NAME + Condition + Cage, data = df, FUN = function(x) c(sum = sum(x), mean = mean(x), sd = sd(x)))
   dur <- do.call(data.frame, dur)
-  names(dur) <- c("NAME", "Genotype", "Cage", "Dur_Total", "Dur_Mean", "Dur_SD")
+  names(dur) <- c("NAME", "Condition", "Cage", "Dur_Total", "Dur_Mean", "Dur_SD")
   dur_tot <- aggregate(FRAME.DUR ~ NAME + Cage, data = df, FUN = function(x) c(sum = sum(x), mean = mean(x), sd = sd(x)))
   dur_tot <- do.call(data.frame, dur_tot)
   names(dur_tot) <- c("NAME", "Cage", "Dur_Total", "Dur_Mean", "Dur_SD")
-  dur_tot$Genotype <- "All"
+  dur_tot$Condition <- "All"
   durbind <- rbind(dur, dur_tot)
   
-  mergedf <- merge(countbind, durbind, by = c("NAME", "Cage", "Genotype"))
+  mergedf <- merge(countbind, durbind, by = c("NAME", "Cage", "Condition"))
   mergedf[is.na(mergedf)] <- 0
   
   assign("cage_event_means", mergedf, envir = .GlobalEnv)
@@ -354,9 +354,9 @@ cage_count_means = function(x, mouse_mani){
 # Function to aggregate filtered all events dataframe
 agg_all_events = function(df, mm){
   df <- merge(df, mm, by = "RFID")
-  df_agg <- aggregate(FRAME.DUR ~ NAME + RFID + Genotype + Cage, data = df, FUN = function(x) c(total_count = length(x), total_duration = sum(x), mean_duration = mean(x), duration_sd = sd(x)))
+  df_agg <- aggregate(FRAME.DUR ~ NAME + RFID + Condition + Cage, data = df, FUN = function(x) c(total_count = length(x), total_duration = sum(x), mean_duration = mean(x), duration_sd = sd(x)))
   df_agg <- do.call(data.frame, df_agg)
-  names(df_agg) <- c("NAME", "RFID", "Genotype", "Cage", "Event_Count", "Duration_Total", "Duration_Mean", "Duration_SD")
+  names(df_agg) <- c("NAME", "RFID", "Condition", "Cage", "Event_Count", "Duration_Total", "Duration_Mean", "Duration_SD")
   return(df_agg)
 }
 
@@ -493,10 +493,10 @@ contrib_circle_plots = function(pca_data, out_path, save_name){
   return(data)
 }
 
-# Assuming df_beh contains behavioral variables and Genotype column
+# Assuming df_beh contains behavioral variables and Condition column
 get_cohen_d <- function(var_name) {
-  x <- df_beh %>% filter(Genotype == "WT") %>% pull(var_name)
-  y <- df_beh %>% filter(Genotype == "KO") %>% pull(var_name)
+  x <- df_beh %>% filter(Condition == "WT") %>% pull(var_name)
+  y <- df_beh %>% filter(Condition == "KO") %>% pull(var_name)
   d <- cohen.d(x, y)$estimate
   return(d)
 }

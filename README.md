@@ -1,6 +1,6 @@
 <p align="center">
   <a href="" rel="noopener">
- <img width=350px height=350px src="https://github.com/DaleAnnear/MouseKing/blob/main/LICENSE/imgs/logo2.png" alt="Project logo"></a>
+ <img width=300px height=300px src="https://github.com/DaleAnnear/MouseKing/blob/main/LICENSE/imgs/logo2.png" alt="Project logo"></a>
 </p>
 
 <h3 align="center">MouseKing</h3>
@@ -74,34 +74,7 @@ Once there use the following script to all for command line execution of MouseKi
 chmod +x MouseKing
 ```
 
-3. Check connection to Sylabs Cloud through Apptainer
-
-Firstly, ensure the Sylabs remote endpoint is linked to your apptainer endpoint. Run:
-
-```
-apptainer remote list
-```
-If Apptainer is installed you should see the following output, or a very similar output.
-
-<p align="centre">
-  <a href="" rel="noopener">
- <img width=800px height=150px src="https://github.com/DaleAnnear/MouseKing/blob/main/LICENSE/imgs/remote_list.png" alt="Project logo"></a>
-</p>
-
-You need to ensure that "library.sylabs.io" is lsited under the "URI" column.
-
-If not run:
-```
-apptainer remote add SylabsCloud cloud.sylabs.io
-```
-
-You may need to log into Syslabs Cloud. To achieve this run: 
-```
-apptainer remote login SylabsCloud
-```
-You may need to perform an authentication. To achieve this follow the instructions that will come up within your console. 
-
-4. Add MouseKing to your path
+3. Add MouseKing to your path
 
 Ensure your current working directory is your MouseKing directory
 
@@ -112,37 +85,73 @@ Next add the MouseKing direcory to your PATH so that it may be exectued from any
 echo 'export PATH="$PATH:/your/directory/path/MouseKing"' >> ~/.bashrc && source ~/.bashrc
 ```
 
-5. Install MouseKing apptainer images
-Naviage to the MouseKing Apptianer directory
+4. Install MouseKing apptainer images
+To fully install MouseKing and the requirent environments, there are two options. The apptainer images can be installed locally through apptainer or downloaded from cloud.sylabs.io.
 
-Run the following to install the full MouseKing enviroment on your system and fetch the required image files from Sylab Cloud
-```
-MouseKing install
-```
+  4.1 For the local installation, run:
 
-Once this is complete, if you execute an ```ls``` command within the Apptainer directory the following 9 files should be present.
+    ```
+    MouseKing install
+    ```
+    or
+    ```
+    MouseKing install local
+    ```
 
-```
-1_LMT_rebuild.def
-1_LMT_rebuild.sif
-1_LMT_rebuild.yml
-2_LMT_processing.def
-2_LMT_processing.sif
-2_LMT_processing.yml
-3_LMT_pca.def
-3_LMT_pca.sif
-3_LMT_pca.yml
-```
+    Once this is complete, if you execute an ```ls``` command within the Apptainer directory the following 8 files should be present.
 
-ALTERNATIVELY: If the .sif files are not present, you can use apptainer to build the images from the .def files. **To do this you must have root privileges. Please note each image can take several minutes or longer to build**. 
+    ```
+    1_LMT_rebuild.def
+    1_LMT_rebuild.sif
+    1_LMT_rebuild.yml
+    2_LMT_processing.def
+    2_LMT_processing.sif
+    2_LMT_processing.yml
+    3_LMT_pca.def
+    3_LMT_pca.sif
+    ```
 
-Navigate into the Apptainer directory. If you are with the MouseKing directory, execute ```cd Apptainer```
+  4.2 For the online installation, run:
 
-```
-sudo apptainer build 1_LMT_rebuild.sif 1_LMT_rebuild.def
-sudo apptainer build 2_LMT_processing.sif 2_LMT_processing.def
-sudo apptainer build 3_LMT_pca.sif  3_LMT_pca.def
-```
+    ```
+    MouseKing install online
+    ```
+
+    Once this is complete, if you execute an ```ls``` command within the Apptainer directory the following 5 files should be present.
+
+    ```
+    1_LMT_rebuild.sif
+    1_LMT_rebuild.yml
+    2_LMT_processing.sif
+    2_LMT_processing.yml
+    3_LMT_pca.sif
+    ```
+    **NOTE:** To use the online instillaation you may need to check your connection to Sylabs Cloud through Apptainer
+
+    Firstly, ensure the Sylabs remote endpoint is linked to your apptainer endpoint. Run:
+
+    ```
+    apptainer remote list
+    ```
+    If Apptainer is installed you should see the following output, or a very similar output.
+
+    <p align="centre">
+      <a href="" rel="noopener">
+    <img width=800px height=150px src="https://github.com/DaleAnnear/MouseKing/blob/main/LICENSE/imgs/remote_list.png" alt="Project logo"></a>
+    </p>
+
+    You need to ensure that "library.sylabs.io" is lsited under the "URI" column.
+
+    If not run:
+    ```
+    apptainer remote add SylabsCloud cloud.sylabs.io
+    ```
+
+    You may need to log into Syslabs Cloud. To achieve this run: 
+    ```
+    apptainer remote login SylabsCloud
+    ```
+    You may need to perform an authentication. To achieve this follow the instructions that will come up within your console. 
 
 
 ## 🔧 Running the tests <a name = "tests"></a>

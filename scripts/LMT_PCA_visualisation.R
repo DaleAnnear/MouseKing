@@ -16,7 +16,7 @@ source("/workspace/LMT_functions.R")
 # Initiate option list
 option_list <- list(
   make_option(c("-i", "--input_dir"), type = "character", help = "REQUIRED: Director path containing input sqlite databases (sqlite files must be rebuilt)"),
-  make_option(c("-c", "--cage_manifest"), type = "character", help = "REQUIRED: File path to cage manifest file (FORMAT: RFID	Genotype	Cage)"),
+  make_option(c("-c", "--cage_manifest"), type = "character", help = "REQUIRED: File path to cage manifest file (FORMAT: RFID	Condition	Cage)"),
   make_option(c("-s", "--save_name"), type = "character", help = "REQUIRED: Provide a save name for the results"),
   make_option(c("-o", "--output"), type = "character", help = "REQUIRED: Output directory path")
 )
@@ -50,7 +50,7 @@ ensure_dir(plotpath)
 
 # Cage Means
 cage_sds <- agg_SD(events_agg)
-cage_means <- merge(subset(cage_durs[cage_durs$Genotype == "All",], select = -Genotype), cage_counts, by = c("NAME", "Cage"))
+cage_means <- merge(subset(cage_durs[cage_durs$Condition == "All",], select = -Condition), cage_counts, by = c("NAME", "Cage"))
 cage_means <- merge(cage_means, cage_sds, by = c("NAME", "Cage") )
 names(cage_means) <- c( "NAME", "Cage" , "x", "Cage_Duration_Total", "Cage_Duration_Mean", "Cage_Duration_SD", "Cage_Count_Total", "Cage_Count_Mean", "Cage_Count_SD", "SD_Mean", "SD_SD")
 cage_means <- subset(cage_means, select = -x)
@@ -62,9 +62,9 @@ norm_base$event_count_nz <- (norm_base$Event_Count - norm_base$Cage_Count_Mean)/
 norm_base$event_dur_nz <- (norm_base$Duration_Mean - norm_base$Cage_Duration_Mean)/norm_base$Cage_Duration_SD
 norm_base$sd_nz <- (norm_base$Duration_SD - norm_base$SD_Mean)/norm_base$SD_SD
 
-norm_counts <- norm_base[c("NAME", "RFID", "Genotype", "event_count_nz")]
-norm_dur <- norm_base[c("NAME", "RFID", "Genotype", "event_dur_nz")]
-norm_sd <-  norm_base[c("NAME", "RFID", "Genotype", "sd_nz")]
+norm_counts <- norm_base[c("NAME", "RFID", "Condition", "event_count_nz")]
+norm_dur <- norm_base[c("NAME", "RFID", "Condition", "event_dur_nz")]
+norm_sd <-  norm_base[c("NAME", "RFID", "Condition", "sd_nz")]
 
 # Change Table Format
 to_df_wide = function(df){
@@ -80,7 +80,7 @@ to_df_wide = function(df){
 data_frames <- list(to_df_wide(norm_counts), to_df_wide(norm_dur), to_df_wide(norm_sd))
 
 # Merge all data frames by "ID"
-df_wide <- reduce(data_frames, full_join, by = c("RFID", "Genotype"))
+df_wide <- reduce(data_frames, full_join, by = c("RFID", "Condition"))
 df_wide[is.na(df_wide) ] <- 0
 
 # Normalised data to be used in PCA
@@ -100,20 +100,19 @@ for (x in nz_groups){
   
   numerical_data <- numerical_data[, !sapply(numerical_data, function(col) any(is.infinite(col)))]
   
-  print(numerical_data)
   # Calculate PCA data
   data.pca <- prcomp(numerical_data)
   pc_df <- as.data.frame(data.pca$x)
   pc_df$Sample <- rownames(numerical_data)
   group_df <- df_wide[c("RFID")]
   group_df$Sample <- rownames(df_wide)
-  group_df$Genotype <- df_wide$Genotype
+  group_df$Condition <- df_wide$Condition
   pc_group_df <- left_join(pc_df, group_df, by = "Sample")
-  pc_group_df <- pc_group_df[, c("Sample", "RFID", "Genotype", setdiff(names(pc_group_df), c("Sample", "RFID", "Genotype")))]
+  pc_group_df <- pc_group_df[, c("Sample", "RFID", "Condition", setdiff(names(pc_group_df), c("Sample", "RFID", "Condition")))]
   
      # Plot PCA
     tiff(paste0(plotpath, options$save_name, "_", x, "_PCA.tiff"), units="in", width=7.5, height=5, res=300)
-    groups <- as.factor(df_wide$Genotype)
+    groups <- as.factor(df_wide$Condition)
     plot_ind <- fviz_pca_ind(data.pca,
                col.ind = groups, # color by groups
                palette = grp_cols,

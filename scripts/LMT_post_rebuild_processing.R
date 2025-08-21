@@ -7,7 +7,7 @@ source("/workspace/LMT_functions.R")
 # Initiate option list
 option_list <- list(
   make_option(c("-i", "--input_dir"), type = "character", help = "REQUIRED: Director path containing input sqlite databases (sqlite files must be rebuilt)"),
-  make_option(c("-c", "--cage_manifest"), type = "character", help = "REQUIRED: File path to cage manifest file (FORMAT: RFID	Genotype	Cage)"),
+  make_option(c("-c", "--cage_manifest"), type = "character", help = "REQUIRED: File path to cage manifest file (FORMAT: RFID	Condition	Cage)"),
   make_option(c("-s", "--save_name"), type = "character", help = "REQUIRED: Provide a save name for the results"),
   make_option(c("-t", "--time_file"), type = "character", help = "File path to cage time (FORMAT: Cage	Treatment	Start_Time	Group)"),
   make_option(c("-o", "--output"), type = "character", help = "REQUIRED: Output directory path"),

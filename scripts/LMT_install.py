@@ -30,6 +30,17 @@ def check_tool(tool_name, version_cmd, parse_version_fn, github_repo, install_ur
 
     print(f"✅ Found {tool_name} version {local_version}")
 
+    # Get latest release
+    try:
+        url = f"https://api.github.com/repos/{github_repo}/releases/latest"
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        latest_version = resp.json()["tag_name"].lstrip("v")
+    except Exception:
+        print(f"⚠️ Could not fetch latest {tool_name} version (GitHub API issue).")
+        print("   Continuing with installed version.\n")
+        return
+
     # Compare versions
     def version_tuple(v): return tuple(int(x) for x in v.split(".") if x.isdigit())
     if version_tuple(local_version) < version_tuple(latest_version):

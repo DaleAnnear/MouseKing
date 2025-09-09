@@ -70,6 +70,7 @@ royale() {
         echo "  -o  Path to the desired output directory (required)"
         echo "  -f  Frame filter - DEFAULT RECOMMENDED (default: 15)"
         echo "  -t  Time file - DEFAULT RECOMMENDED (default: NULL)"
+        echo "  -d  Reference group for effect size calculation (Cohen D value) - DEFAULT RECOMMENDED (default: NULL)"
         echo "  -r  Rebuild (default: TRUE)"
         echo ""
         echo "Example:"
@@ -77,7 +78,7 @@ royale() {
         return
     fi
 
-    while getopts "i:m:s:o:f:t:r:" opt; do
+    while getopts "i:m:s:o:f:t:d:r:" opt; do
         case "$opt" in
             i) input_file="$OPTARG" ;;
             m) manifest="$OPTARG" ;;
@@ -85,6 +86,7 @@ royale() {
             o) output="$OPTARG" ;;
             f) frame_filter="$OPTARG" ;;
             t) time_file="$OPTARG" ;;
+            d) effect_reference="$OPTARG" ;;
             r) rebuild="$OPTARG" ;;
             *) echo "Invalid option"; exit 1 ;;
         esac
@@ -92,6 +94,7 @@ royale() {
 
     frame_filter="${frame_filter:-15}"
     time_file="${time_file:-NULL}"
+    effect_reference="${effect_reference:-NULL}"
     rebuild="${rebuild:-"TRUE"}"
 
     if [[ -z "$input_file" || -z "$manifest" || -z "$save_name" || -z "$output" ]]; then
@@ -101,9 +104,9 @@ royale() {
 
     echo "######    Performing full MouseKing pipeline  ######"
     if [ "$rebuild" == "TRUE" ]; then
-        run_cmd="nextflow run '$globdir/Nextflow/MouseKing_main.nf' --input_file '$input_file' --manifest '$manifest' --save_name '$save_name' --output '$output' --time_file '$time_file' --event_frame_filter '$frame_filter'"
+        run_cmd="nextflow run '$globdir/Nextflow/MouseKing_main.nf' --input_file '$input_file' --manifest '$manifest' --save_name '$save_name' --output '$output' --time_file '$time_file' --ref '$effect_reference' --event_frame_filter '$frame_filter'"
     elif [ "$rebuild" == "FALSE" ]; then
-        run_cmd="nextflow run '$globdir/Nextflow/MouseKing_royale_norebuild.nf' --input_file '$input_file' --manifest '$manifest' --save_name '$save_name' --output '$output' --time_file '$time_file' --event_frame_filter '$frame_filter'"
+        run_cmd="nextflow run '$globdir/Nextflow/MouseKing_norebuild.nf' --input_file '$input_file' --manifest '$manifest' --save_name '$save_name' --output '$output' --time_file '$time_file' --ref '$effect_reference' --event_frame_filter '$frame_filter'"
     fi    
     run_command "$run_cmd"
 }
@@ -265,21 +268,25 @@ pca() {
         echo "  -m  File path to the mouse cage manifest (required)"
         echo "  -s  Save name for the batch of SQlite files to be processed (required)"
         echo "  -o  Path to the desired output directory (required)"
+        echo "  -d  Reference group for effect size (Cohen D value) (optional: default - NULL)"
         echo ""
         echo "Example:"
         echo "  MouseKing processing -i Example/data/input.txt -m Example/data/Example_manifest.txt -s MouseKing_Example -o Example/results"
         return
     fi
 
-    while getopts "i:m:s:o:f:t:" opt; do
+    while getopts "i:m:s:o:f:d:" opt; do
         case "$opt" in
             i) input_dir="$OPTARG" ;;
             m) manifest="$OPTARG" ;;
             s) save_name="$OPTARG" ;;
             o) output="$OPTARG" ;;
+            d) effect_reference="$OPTARG" ;;
             *) echo "Invalid option"; exit 1 ;;
         esac
     done
+
+    effect_reference="${effect_reference:-NULL}"
 
     if [[ -z "$input_dir" || -z "$manifest" || -z "$save_name" || -z "$output" ]]; then
         echo "Error: One or more required argument are missing. Please see --help for usage."
@@ -287,7 +294,7 @@ pca() {
     fi
 
     echo "Constructing PCA plots for processed LMT data"
-    run_cmd="nextflow run '$globdir/Nextflow/MouseKing_pca.nf' --input_dir '$input_dir' --manifest '$manifest' --save_name '$save_name' --output '$output'"
+    run_cmd="nextflow run '$globdir/Nextflow/MouseKing_pca.nf' --input_dir '$input_dir' --manifest '$manifest' --save_name '$save_name' --output '$output' --ref '$effect_reference'"
     run_command "$run_cmd"
 }
 

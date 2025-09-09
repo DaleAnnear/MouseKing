@@ -60,7 +60,6 @@ git clone https://github.com/DaleAnnear/MouseKing.git
 
 Alternatively, you can downloand a zip of the MouseKing repository from the GitHub website. Download the .zip file to a directory of your choice and extract the repository.  
 
-
 2. chmod MouseKing to allow for execution
 
 Naviage into the MouseKing directory cloned from Github.
@@ -75,7 +74,6 @@ Once there use the following script to all for command line execution of MouseKi
 chmod +x MouseKing
 ```
 
-
 3. Add MouseKing to your path
 
 Ensure your current working directory is your MouseKing directory
@@ -87,74 +85,73 @@ Next add the MouseKing direcory to your PATH so that it may be exectued from any
 echo 'export PATH="$PATH:/your/directory/path/MouseKing"' >> ~/.bashrc && source ~/.bashrc
 ```
 
-
 4. Install MouseKing apptainer images
 To fully install MouseKing and the requirent environments, there are two options. The apptainer images can be installed locally through apptainer or downloaded from cloud.sylabs.io.
 
-4.1 For the local installation, run:
+  4.1 For the local installation, run:
 
-```
-MouseKing install
-```
-or
-```
-MouseKing install local
-```
+    ```
+    MouseKing install
+    ```
+    or
+    ```
+    MouseKing install local
+    ```
 
-Once this is complete, if you execute an ```ls``` command within the Apptainer directory the following 8 files should be present.
+    Once this is complete, if you execute an ```ls``` command within the Apptainer directory the following 8 files should be present.
 
-```
-1_LMT_rebuild.def
-1_LMT_rebuild.sif
-1_LMT_rebuild.yml
-2_LMT_processing.def
-2_LMT_processing.sif
-2_LMT_processing.yml
-3_LMT_pca.def
-3_LMT_pca.sif
-```
+    ```
+    1_LMT_rebuild.def
+    1_LMT_rebuild.sif
+    1_LMT_rebuild.yml
+    2_LMT_processing.def
+    2_LMT_processing.sif
+    2_LMT_processing.yml
+    3_LMT_pca.def
+    3_LMT_pca.sif
+    ```
 
-4.2 For the online installation, run:
+  4.2 For the online installation, run:
 
-```
-MouseKing install online
-```
+    ```
+    MouseKing install online
+    ```
 
-Once this is complete, if you execute an ```ls``` command within the Apptainer directory the following 5 files should be present.
+    Once this is complete, if you execute an ```ls``` command within the Apptainer directory the following 5 files should be present.
 
-```
-1_LMT_rebuild.sif
-1_LMT_rebuild.yml
-2_LMT_processing.sif
-2_LMT_processing.yml
-3_LMT_pca.sif
-```
-**NOTE:** To use the online instillaation you may need to check your connection to Sylabs Cloud through Apptainer
+    ```
+    1_LMT_rebuild.sif
+    1_LMT_rebuild.yml
+    2_LMT_processing.sif
+    2_LMT_processing.yml
+    3_LMT_pca.sif
+    ```
+    **NOTE:** To use the online instillaation you may need to check your connection to Sylabs Cloud through Apptainer
 
-Firstly, ensure the Sylabs remote endpoint is linked to your apptainer endpoint. Run:
+    Firstly, ensure the Sylabs remote endpoint is linked to your apptainer endpoint. Run:
 
-```
-apptainer remote list
-```
-If Apptainer is installed you should see the following output, or a very similar output.
+    ```
+    apptainer remote list
+    ```
+    If Apptainer is installed you should see the following output, or a very similar output.
 
-<p align="centre">
-  <a href="" rel="noopener">
-  <img width=800px height=150px src="https://github.com/DaleAnnear/MouseKing/blob/main/LICENSE/imgs/remote_list.png" alt="Project logo"></a>
-</p>
+    <p align="centre">
+      <a href="" rel="noopener">
+    <img width=800px height=150px src="https://github.com/DaleAnnear/MouseKing/blob/main/LICENSE/imgs/remote_list.png" alt="Project logo"></a>
+    </p>
 
-You need to ensure that "library.sylabs.io" is lsited under the "URI" column.
+    You need to ensure that "library.sylabs.io" is lsited under the "URI" column.
 
-If not run:
-```
-apptainer remote add SylabsCloud cloud.sylabs.io
-```
+    If not run:
+    ```
+    apptainer remote add SylabsCloud cloud.sylabs.io
+    ```
 
-You may need to log into Syslabs Cloud. To achieve this run: 
-```
-apptainer remote login SylabsCloud
-```
-You may need to perform an authentication. To achieve this follow the instructions that will come up within your console. 
+    You may need to log into Syslabs Cloud. To achieve this run: 
+    ```
+    apptainer remote login SylabsCloud
+    ```
+    You may need to perform an authentication. To achieve this follow the instructions that will come up within your console. 
 
 
 ## 🔧 Running the tests <a name = "tests"></a>

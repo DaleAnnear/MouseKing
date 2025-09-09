@@ -429,67 +429,11 @@ custom_palette <- c("Spatial Positioning"="#00AFBB",
                     "Grouping & Withdrawal"="#9413CB"
                     )
 
-# Function to build contributing factor circle plots
-contrib_circle_plots = function(pca_data, out_path, save_name){
+# Function to gather the varaibale and meta data of PCA
+gather_var_and_meta = function(pca_data, out_path, save_name){
   # Get contributing variable data
   data <- as.data.frame(get_pca_var(pca_data)$contrib)
   data <- add_event_meta(data)
-  data$Dim.comb <- apply(data, 1, function(x){n <- sqrt(as.numeric(x["Dim.1"])^2 + as.numeric(x["Dim.2"])^2)})
-   
-  # Assign constants
-  ylim <- max(data$Dim.comb)/max(data$Dim.comb)
-  av <- c("1"=541, "2"=1082, "3"=1443, "4"=1804, "5"=2105, "6"=2526, "7"=2887, "8"=3248, "9"=3609, "10"=301)
- 
-  # Build plots for each behaviour group
-  for (x in unique(data$behaviour.group)){
-    print(x)
-    col <- custom_palette[x]
-    dp <- data[data$pca.group == "event_count_nz", c("Event_Type", "Dim.comb", "behaviour.group")]
-    dp <- dp[dp$behaviour.group == x, c("Event_Type", "Dim.comb")]
-    dp$Dim.comb.std <- dp$Dim.comb/ylim #*100
-    
-    # Compute positions in a circular layout
-    n <- nrow(dp)
-    theta <- seq(0, 2 * pi, length.out = n + 1)[-1]  # Equally spaced angles
-    
-    # Assign positions 
-    if (nrow(dp) <= 4) dis <- 1 else if ((nrow(dp) <= 5)) dis <- 2 else dis <- 10
-    #if (nrow(dp) == 1) dis <- 1 else if if (nrow(dp) == 1) dis <- 1 else if if (nrow(dp) == 1) dis <- 1 else if if (nrow(dp) == 1) dis <- 1 else if if (nrow(dp) == 1) dis <- 1 else if if (nrow(dp) == 1) dis <- 1 else if if (nrow(dp) == 1) dis <- 1 else if if (nrow(dp) == 1) dis <- 1 else if if (nrow(dp) == 1) dis <- 1 else if if (nrow(dp) == 1) dis <- 1
-    dis <- nrow(dp)+3
-
-    dp$x <- cos(theta) * (dis)  # Radius of 5 for spacing
-    dp$y <- sin(theta) * (dis) 
-    
-    # Central circle (fixed position)
-    center <- data.frame(x = 0, y = 0, Dim.comb = ylim, Dim.comb.std = 100, Event_Type = "")
-    
-    # Combine data
-    all_data <- rbind(center, dp)
-    all_data$alpha <- ifelse(all_data$Event_Type == "", 0, 0.6)
-    alpha_vec <- c(0, rep(0.9,av[nrow(dp)]))
-    col_vec <- c("white", rep("#303030",av[nrow(dp)]))
-    all_data$Dim.comb.scaled <-  all_data$Dim.comb / max(all_data$Dim.comb)
-    
-    # Plot
-    #gg <- ggplot(all_data) +
-    #  geom_circle(aes(
-    #    x0 = x, y0 = y, r = Dim.comb.scaled*3, 
-    #    fill = Dim.comb.scaled  # Map color and size to Dim.1
-    #  ), alpha = alpha_vec, color=col_vec, linewidth = 0.8) +
-    #  geom_text(aes(x = x, y = y-(Dim.comb.scaled*1.3+2), label = Event_Type), size = 3) +  # Add labels
-    #  coord_fixed() +  # Keep aspect ratio equal
-    #  scale_fill_gradient(low = "white", high = col, name = "Contrib", limits = c(0, ylim)) +  # Gradient fill
-    #  theme_void() + 
-    #  theme(legend.position = "bottom") + #scale_fill_continuous()
-    #  ggtitle(x)  # Replace with x if it's a  dynamic title
-
-    savepath <-  paste0(out_path, save_name, "_CF_circle_plot_", gsub(" ", "", x))
-    savepath <- gsub("&", "", savepath)
-    
-    #tiff(paste0(savepath,".tiff"), width=10, height=7.5, unit="in", res=300)
-    #print(gg)
-    #dev.off()
-  }
   return(data)
 }
 
@@ -526,3 +470,53 @@ ensure_dir <- function(path, recursive = FALSE) {
   }
   invisible(path)
 }
+
+# Function for calcluating all possible Cohen d values
+pairwise_cohen_d_str <- function(data, var, condition,
+                                 reference = NULL, pairs = NULL,
+                                 hedges_correction = TRUE, pooled = TRUE, na_rm = TRUE) {
+  stopifnot(is.character(var), length(var) == 1,
+            is.character(condition), length(condition) == 1)
+  
+  df <- data %>%
+    transmute(.value = .data[[var]],
+              .group = as.character(.data[[condition]])) %>%
+    filter(!is.na(.value), !is.na(.group))
+  
+  lvls <- unique(df$.group)
+  if (length(lvls) < 2) stop("Need at least two condition levels.")
+  
+  pair_df <-
+    if (!is.null(pairs)) {
+      tibble(group1 = vapply(pairs, `[`, "", 1),
+             group2 = vapply(pairs, `[`, "", 2))
+    } else if (!is.null(reference)) {
+      stopifnot(reference %in% lvls)
+      tibble(group1 = reference, group2 = setdiff(lvls, reference))
+    } else {
+      cmb <- t(combn(lvls, 2))
+      tibble(group1 = cmb[,1], group2 = cmb[,2])
+    }
+  
+  purrr::pmap_dfr(pair_df, function(group1, group2) {
+    x <- df %>% filter(.group == group1) %>% pull(.value)
+    y <- df %>% filter(.group == group2) %>% pull(.value)
+    res <- effsize::cohen.d(x, y,
+                            hedges.correction = hedges_correction,
+                            pooled = pooled,
+                            na.rm = na_rm)
+    tibble(
+      variable   = var,
+      condition  = condition,
+      group1     = group1,
+      group2     = group2,
+      n1         = length(x),
+      n2         = length(y),
+      d          = unname(res$estimate),
+      magnitude  = res$magnitude
+    )
+  }) %>% arrange(group1, group2)
+}
+
+# Set colour variable for plot construction
+grp_cols <- c("#00AFBB", "#FC4E07", "darkorchid1", "#E7B800", "#0CB702", "#CC79A7", "red", "gray", "black")

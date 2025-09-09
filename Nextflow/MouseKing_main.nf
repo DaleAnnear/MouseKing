@@ -12,6 +12,7 @@ params.output = "${MouseKingDir}/Example/results/"
 //Pipeline parameters (We reccommend using the below defaults)
 params.time_file = "NULL" // If a time file is provided, the exact time of day can be calculated for each event
 params.event_frame_filter = 15 // 15 means that any event shorter than 15 frames (0.5 seconds) will be filtered out
+params.ref = "NULL" //Reference group for effect size calculation
 
 //Apptainer image parameters
 params.appimage_1_LMT = "${MouseKingDir}/Apptainer/1_LMT_rebuild.sif"

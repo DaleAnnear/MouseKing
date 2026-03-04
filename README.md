@@ -86,6 +86,7 @@ echo 'export PATH="$PATH:/your/directory/path/MouseKing"' >> ~/.bashrc && source
 ```
 
 4. Install MouseKing docker images
+
 To fully install MouseKing and the required environments, there are two options. The docker images can be built locally through docker or downloaded from dockerhub (https://hub.docker.com/repository/docker/daleannear/mouseking/general). Both options can be handled and managed by MouseKing.
 
 4.1 For the local installation, run:

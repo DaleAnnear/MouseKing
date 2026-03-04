@@ -10,7 +10,7 @@
 [![Status](https://img.shields.io/badge/status-active-success.svg)]()
 [![GitHub Issues](https://img.shields.io/github/issues/DaleAnnear/MouseKing.svg)](https://github.com/DaleAnnear/MouseKing/issues)
 [![GitHub Pull Requests](https://img.shields.io/github/issues-pr/DaleAnnear/MouseKing.svg)](https://github.com/DaleAnnear/MouseKing/pulls)
-[![License](https://img.shields.io/badge/license-idontknow-blue)](/LICENSE)
+<!-- [![License](https://img.shields.io/badge/license-idontknow-blue)](/LICENSE) -->
 
 </div>
 
@@ -40,9 +40,9 @@ The following instructions will help you to set up the MouseKing pipeline.
 
 ### Prerequisites
 
-The only Prerequisites for MouseKing are a Linux system and the installation of the latest versions of [Apptainer](https://apptainer.org/) and [Nextflow](https://www.nextflow.io/). Please follow the links below for more information on the installation of these packages.
+The only Prerequisites for MouseKing are a Linux system and the installation of the latest versions of [Docker](https://https://www.docker.com/) and [Nextflow](https://www.nextflow.io/). Please follow the links below for more information on the installation of these packages.
 
-- [INSTALL Apptainer](https://github.com/apptainer/apptainer/blob/release-1.3/INSTALL.md)
+- [INSTALL Docker](https://docs.docker.com/engine/install/)
 
 - [INSTALL Nextflow](https://www.nextflow.io/docs/latest/install.html)
 
@@ -68,7 +68,7 @@ Naviage into the MouseKing directory cloned from Github.
 cd MouseKing
 ```
 
-Once there use the following script to all for command line execution of MouseKing
+Once there use the following script to allow for command line execution of MouseKing
 
 ```
 chmod +x MouseKing
@@ -79,14 +79,14 @@ chmod +x MouseKing
 Ensure your current working directory is your MouseKing directory
 
 Next add the MouseKing direcory to your PATH so that it may be exectued from any location  
-**NOTE:** Replace "/your/directory/path/" with the paath on your system which contians the the MouseKing repository
+**NOTE:** Replace "/your/directory/path/" with the path on your system which contians the the MouseKing repository
 
 ```
 echo 'export PATH="$PATH:/your/directory/path/MouseKing"' >> ~/.bashrc && source ~/.bashrc
 ```
 
-4. Install MouseKing apptainer images
-To fully install MouseKing and the requirent environments, there are two options. The apptainer images can be installed locally through apptainer or downloaded from cloud.sylabs.io.
+4. Install MouseKing docker images
+To fully install MouseKing and the requirent environments, there are two options. The apptainer images can be installed locally through apptainer or downloaded from dockerhub (https://hub.docker.com/repository/docker/daleannear/mouseking/general).
 
 4.1 For the local installation, run:
 
@@ -100,62 +100,13 @@ or
 MouseKing install local
 ```
 
-Once this is complete, if you execute an ```ls``` command within the Apptainer directory the following 8 files should be present.
-
-```
-1_LMT_rebuild.def
-1_LMT_rebuild.sif
-1_LMT_rebuild.yml
-2_LMT_processing.def
-2_LMT_processing.sif
-2_LMT_processing.yml
-3_LMT_pca.def
-3_LMT_pca.sif
-```
-
 4.2 For the online installation, run:
 
 ```
 MouseKing install online
 ```
 
-Once this is complete, if you execute an ```ls``` command within the Apptainer directory the following 5 files should be present.
-
-```
-1_LMT_rebuild.sif
-1_LMT_rebuild.yml
-2_LMT_processing.sif
-2_LMT_processing.yml
-3_LMT_pca.sif
-```
-
-**NOTE:** To use the online instillaation you may need to check your connection to Sylabs Cloud through Apptainer
-
-Firstly, ensure the Sylabs remote endpoint is linked to your apptainer endpoint. Run:
-
-```
-  apptainer remote list
-    ```
-    If Apptainer is installed you should see the following output, or a very similar output.
-
-    <p align="centre">
-      <a href="" rel="noopener">
-    <img width=800px height=150px src="https://github.com/DaleAnnear/MouseKing/blob/main/LICENSE/imgs/remote_list.png" alt="Project logo"></a>
-    </p>
-
-    You need to ensure that "library.sylabs.io" is lsited under the "URI" column.
-
-    If not run:
-    ```
-    apptainer remote add SylabsCloud cloud.sylabs.io
-    ```
-
-    You may need to log into Syslabs Cloud. To achieve this run: 
-    ```
-    apptainer remote login SylabsCloud
-    ```
-    You may need to perform an authentication. To achieve this follow the instructions that will come up within your console. 
-
+**NOTE:** To use the online installation you may need to log in to DockerHub.
 
 ## 🔧 Running the tests <a name = "tests"></a>
 
@@ -182,7 +133,7 @@ The available commands are:
     integrity               Checks the integrity of the provided LMT SQlite files
     rebuild                 Rebuilds all detected mouse events in the provided LMT SQlite files
     extract                 Extracts the EVENT and ANIMAL tables from the provided LMT SQlite files
-    processing              Performs processing and filtering of the extracted LMT data contained within the EVENT and ANIMAL tables
+    processing              Performs processing and filtering of the extracted LMT data contained...
     pca                     Constructs PCA plots for the provided processed LMT data
 ```
 
@@ -219,7 +170,7 @@ MouseKing <command> --help
 
 - [R](https://www.r-project.org/)       - Code
 - [Python](https://www.python.org/)     - Code
-- [Apptainer](https://apptainer.org/)   - Environment and reproducibility
+- [Docker](https://docker.com/)         - Environment and reproducibility
 - [Nextflow](https://www.nextflow.io/)  - Workflow management
 
 ## ✍️ Authors <a name = "authors"></a>

@@ -1,0 +1,75 @@
+FROM ubuntu:20.04
+
+LABEL Author="Dale J. Annear, PhD" \
+      Version="v1.0"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Create workspace
+WORKDIR /workspace
+
+# System deps (same as your %post)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      wget \
+      bzip2 \
+      ca-certificates \
+      libglib2.0-0 \
+      libxext6 \
+      libsm6 \
+      libxrender1 \
+      curl \
+      tar \
+      coreutils \
+      sed \
+    && update-ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy build inputs (replaces %files)
+# Put these files/folders next to the Dockerfile in your build context.
+COPY 1_LMT_rebuild.yml /workspace/1_LMT_rebuild.yml
+COPY LMT_Check_Integrity.py /workspace/LMT_Check_Integrity.py
+COPY LMT_Rebuild_All_Events.R /workspace/LMT_rebuild_all_events.R
+COPY LMT_Extract_Tables.R /workspace/LMT_Extract_Tables.R
+COPY LMT_functions.R /workspace/LMT_functions.R
+COPY lmt-analysis-master /workspace/lmt-analysis-master
+
+# Install micromamba and create env from YAML
+RUN mkdir -p /usr/local \
+ && curl -L https://micro.mamba.pm/api/micromamba/linux-64/latest -o /tmp/micromamba.tar.bz2 \
+ && tar -xvjf /tmp/micromamba.tar.bz2 -C /usr/local bin/micromamba \
+ && rm -f /tmp/micromamba.tar.bz2 \
+ && chmod +x /usr/local/bin/micromamba \
+ && export MAMBA_NO_BANNER=1 \
+ && /usr/local/bin/micromamba create -y -p /opt/conda/envs/LMT_rebuild -f /workspace/1_LMT_rebuild.yml \
+ && /usr/local/bin/micromamba clean -a -y
+
+# Runtime PATH (like your %environment)
+ENV PATH="/opt/conda/envs/LMT_rebuild/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Entrypoint script (like your %runscript)
+RUN cat > /usr/local/bin/lmt_entrypoint.sh <<'EOF'
+#!/bin/bash
+set -e
+case "$1" in
+  CheckIntegrity)
+    shift
+    exec python /workspace/LMT_Check_Integrity.py "$@"
+    ;;
+  RebuildAllEvents)
+    shift
+    exec Rscript /workspace/LMT_rebuild_all_events.R "$@"
+    ;;
+  GetTables)
+    shift
+    exec Rscript /workspace/LMT_Extract_Tables.R "$@"
+    ;;
+  *)
+    echo "Usage: docker run --rm <image> [CheckIntegrity|RebuildAllEvents|GetTables] [script arguments]"
+    exit 1
+    ;;
+esac
+EOF
+
+RUN chmod +x /usr/local/bin/lmt_entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/lmt_entrypoint.sh"]

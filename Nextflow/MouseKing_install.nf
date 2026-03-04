@@ -2,21 +2,12 @@
 
 params.install_dir = "${projectDir}"
 
-process BuildDEF{
-    input:
-        path params.install_dir    
-
-    script:
-    """
-    python3 ${params.install_dir}/scripts/LMT_install.py '${params.install_dir}'
-    """
-}
-
 process BuildSIF_Rebuild{
     script:
 
     """
-    apptainer build '${params.install_dir}/Apptainer/1_LMT_rebuild.sif' '${params.install_dir}/Apptainer/1_LMT_rebuild.def'
+    cd '${params.install_dir}/src'
+    docker build -f Dockerfile.rebuild -t lmt_rebuild:1.0 .
     """
 }
 
@@ -24,7 +15,8 @@ process BuildSIF_Process{
     script:
 
     """
-    apptainer build '${params.install_dir}/Apptainer/2_LMT_processing.sif' '${params.install_dir}/Apptainer/2_LMT_processing.def'
+    cd '${params.install_dir}/src'
+    docker build -f Dockerfile.procesing -t lmt_processing:1.0 .
     """
 }
 
@@ -32,7 +24,8 @@ process BuildSIF_PCA{
     script:
 
     """
-    apptainer build '${params.install_dir}/Apptainer/3_LMT_pca.sif' '${params.install_dir}/Apptainer/3_LMT_pca.def'
+    cd '${params.install_dir}/src'
+    docker build -f Dockerfile.pca -t lmt_pca:1.0 .
     """
 }
 

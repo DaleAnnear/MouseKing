@@ -14,10 +14,10 @@ params.time_file = "NULL" // If a time file is provided, the exact time of day c
 params.event_frame_filter = 15 // 15 means that any event shorter than 15 frames (0.5 seconds) will be filtered out
 
 //Apptainer image parameters
-params.appimage_2_LMT = "${MouseKingDir}/Apptainer/2_LMT_processing.sif"
+params.dockerimage_2_LMT = "lmt_processing:1.0"
 
 process Processing {
-    container 'apptainer'
+    container 'docker'
 
     publishDir "${params.output}/logs", mode: 'copy'
 
@@ -29,7 +29,15 @@ process Processing {
     
     script:
     """
-    apptainer run '${params.appimage_2_LMT}' -i '${params.input_dir}' -c '${params.manifest}' -s '${params.save_name}' -t '${params.time_file}' -f ${params.event_frame_filter} -o '${params.output}' > 'LMT_2_PostProcessing_log-${params.save_name}.txt'
+    docker run --rm \
+        "${params.dockerimage_2_LMT}" \
+        -i "${params.input_dir}" \
+        -c "${params.manifest}" \
+        -s "${params.save_name}" \
+        -t "${params.time_file}" \
+        -f ${params.event_frame_filter} \
+        -o "${params.output}" \
+        > "LMT_2_PostProcessing_log-${params.save_name}.txt"
     """
 }
 

@@ -14,13 +14,13 @@ params.time_file = "NULL" // If a time file is provided, the exact time of day c
 params.event_frame_filter = 15 // 15 means that any event shorter than 15 frames (0.5 seconds) will be filtered out
 params.ref = "NULL" //Reference group for effect size calculation
 
-//Apptainer image parameters
-params.appimage_1_LMT = "${MouseKingDir}/Apptainer/1_LMT_rebuild.sif"
-params.appimage_2_LMT = "${MouseKingDir}/Apptainer/2_LMT_processing.sif"
-params.appimage_3_LMT = "${MouseKingDir}/Apptainer/3_LMT_pca.sif"
+//Docker image parameters
+params.dockerimage_1_LMT = "lmt_rebuild:1.0"
+params.dockerimage_2_LMT = "lmt_processing:1.0"
+params.dockerimage_3_LMT = "lmt_pca:1.0"
 
 process CheckIntegrity {
-    container 'apptainer'
+    container 'docker'
 
     publishDir "${params.output}/logs", pattern: '*.txt', mode: 'copy'
 
@@ -33,12 +33,16 @@ process CheckIntegrity {
 
     script:
     """
-    apptainer run --bind ${input_file.toRealPath()}:${input_file.toRealPath()} '${params.appimage_1_LMT}' CheckIntegrity '${input_file}' > 'LMT_1.1_CheckIntegrity_log-${params.save_name}_${input_file.simpleName}.txt'
+    docker run --rm \
+        -v "${input_file.toRealPath()}:${input_file.toRealPath()}" \
+        "${params.dockerimage_1_LMT}" \
+        CheckIntegrity "${input_file.toRealPath()}" \
+        > "LMT_1.1_CheckIntegrity_log-${params.save_name}_${input_file.simpleName}.txt"
     """
 }
 
 process RebuildScript {
-    container 'apptainer'
+    container 'docker'
 
     publishDir "${params.output}/logs", pattern: '*.txt', mode: 'copy'
 
@@ -51,12 +55,16 @@ process RebuildScript {
 
     script:
     """
-    apptainer run --bind ${input_file.toRealPath()}:${input_file.toRealPath()} '${params.appimage_1_LMT}' RebuildAllEvents -f '${input_file}' > 'LMT_1.2_RebuildAllEvents_log-${params.save_name}_${input_file.simpleName}.txt'
+    docker run --rm \
+        -v "${input_file.toRealPath()}:${input_file.toRealPath()}" \
+        "${params.dockerimage_1_LMT}" \
+        RebuildAllEvents -f "${input_file.toRealPath()}" \
+        > "LMT_1.2_RebuildAllEvents_log-${params.save_name}_${input_file.simpleName}.txt"
     """
 }
 
 process ExtractTables {
-    container 'apptainer'
+    container 'docker'
 
     publishDir "${params.output}/logs", mode: 'copy'
 
@@ -68,12 +76,17 @@ process ExtractTables {
 
     script:
     """
-    apptainer run --bind ${input_file.toRealPath()}:${input_file.toRealPath()} --bind ${params.output}:${params.output} '${params.appimage_1_LMT}' GetTables -f '${input_file}' -s ${params.save_name} -o '${params.output}' > 'LMT_1.3_ExtractTables_log-${input_file.simpleName}_${params.save_name}.txt'
+    docker run --rm \
+        -v "${input_file.toRealPath()}:${input_file.toRealPath()}" \
+        -v "${params.output}:${params.output}" \
+        "${params.dockerimage_1_LMT}" \
+        GetTables -f "${input_file.toRealPath()}" -s "${params.save_name}" -o "${params.output}" \
+        > "LMT_1.3_ExtractTables_log-${input_file.simpleName}_${params.save_name}.txt"
     """
 }
 
 process PostProcessing {
-    container 'apptainer'
+    container 'docker'
 
     publishDir "${params.output}/logs", mode: 'copy'
 
@@ -85,12 +98,22 @@ process PostProcessing {
     
     script:
     """
-    apptainer run --bind ${params.output}:${params.output} --bind ${params.manifest}:${params.manifest} '${params.appimage_2_LMT}' -i '${params.output}' -c '${params.manifest}' -s '${params.save_name}' -t '${params.time_file}' -f ${params.event_frame_filter} -o '${params.output}' > 'LMT_2_PostProcessing_log-${params.save_name}.txt'
+    docker run --rm \
+        -v "${params.output}:${params.output}" \
+        -v "${params.manifest}:${params.manifest}" \
+        "${params.dockerimage_2_LMT}" \
+        -i "${params.output}" \
+        -c "${params.manifest}" \
+        -s "${params.save_name}" \
+        -t "${params.time_file}" \
+        -f ${params.event_frame_filter} \
+        -o "${params.output}" \
+        > "LMT_2_PostProcessing_log-${params.save_name}.txt"
     """
 }
 
 process pcaVisualisation {
-    container 'apptainer'
+    container 'docker'
 
     publishDir "${params.output}/logs", mode: 'copy'
 
@@ -102,12 +125,17 @@ process pcaVisualisation {
     
     script:
     """
-    apptainer run --bind ${params.output}:${params.output} --bind ${params.manifest}:${params.manifest} '${params.appimage_3_LMT}' PCA -i '${params.output}' -c '${params.manifest}' -s '${params.save_name}' -o '${params.output}' > 'LMT_3.1_PCA_visualisation_log-${params.save_name}.txt'
+    docker run --rm \
+        -v "${params.output}:${params.output}" \
+        -v "${params.manifest}:${params.manifest}" \
+        "${params.dockerimage_3_LMT}" \
+        PCA -i "${params.output}" -c "${params.manifest}" -s "${params.save_name}" -o "${params.output}" \
+        > "LMT_3.1_PCA_visualisation_log-${params.save_name}.txt"
     """
 }
 
 process CheckTheStatistaks {
-    container 'apptainer'
+    container 'docker'
 
     publishDir "${params.output}/logs", mode: 'copy'
 
@@ -119,7 +147,12 @@ process CheckTheStatistaks {
     
     script:
     """
-    apptainer run --bind ${params.output}:${params.output} --bind ${params.manifest}:${params.manifest} '${params.appimage_3_LMT}' BigShaq -i '${params.output}' -s '${params.save_name}' -o '${params.output}' > 'LMT_3.2_PCA_statistics_log-${params.save_name}.txt'
+    docker run --rm \
+        -v "${params.output}:${params.output}" \
+        -v "${params.manifest}:${params.manifest}" \
+        "${params.dockerimage_3_LMT}" \
+        BigShaq -i "${params.output}" -s "${params.save_name}" -o "${params.output}" \
+        > "LMT_3.2_PCA_statistics_log-${params.save_name}.txt"
     """
 }
 

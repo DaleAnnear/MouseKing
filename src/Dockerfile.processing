@@ -1,0 +1,51 @@
+FROM ubuntu:20.04
+
+LABEL Author="Dale J. Annear, PhD" \
+      Version="v1.0"
+
+ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /workspace
+
+# Base deps for downloading/extracting micromamba and SSL certs
+RUN set -e \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends \
+      curl \
+      bzip2 \
+      ca-certificates \
+      tar \
+      libglib2.0-0 \
+      libxext6 \
+      libsm6 \
+      libxrender1 \
+ && update-ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+# Install micromamba (static binary)
+RUN set -e \
+ && mkdir -p /usr/local \
+ && curl -L https://micro.mamba.pm/api/micromamba/linux-64/latest -o /tmp/micromamba.tar.bz2 \
+ && tar -xvjf /tmp/micromamba.tar.bz2 -C /usr/local bin/micromamba \
+ && rm -f /tmp/micromamba.tar.bz2 \
+ && chmod +x /usr/local/bin/micromamba
+
+# Copy build inputs (replaces %files)
+# Put these in your docker build context next to the Dockerfile (or adjust paths):
+#   2_LMT_processing.yml
+#   LMT_post_rebuild_processing.R
+#   LMT_functions.R
+COPY 2_LMT_processing.yml /workspace/2_LMT_processing.yml
+COPY LMT_post_rebuild_processing.R /workspace/LMT_post_rebuild_processing.R
+COPY LMT_functions.R /workspace/LMT_functions.R
+
+# Create environment from the provided YAML
+RUN set -e \
+ && export MAMBA_NO_BANNER=1 \
+ && /usr/local/bin/micromamba create -y -p /opt/conda/envs/LMT_processing -f /workspace/2_LMT_processing.yml \
+ && /usr/local/bin/micromamba clean -a -y
+
+# Ensure the env is active via PATH (no 'conda activate' needed)
+ENV PATH="/opt/conda/envs/LMT_processing/bin:/usr/local/bin:${PATH}"
+
+# Run the post-rebuild processing R script by default
+ENTRYPOINT ["Rscript", "/workspace/LMT_post_rebuild_processing.R"]

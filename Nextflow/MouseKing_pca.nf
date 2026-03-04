@@ -9,11 +9,11 @@ params.manifest = "${MouseKingDir}/Example/data/LMT_manifest.txt"
 params.save_name = "MouseKing_Example"
 params.output = "${MouseKingDir}/Example/results/"
 
-//Apptainer image parameters
-params.appimage_3_LMT = "${MouseKingDir}/Apptainer/3_LMT_pca.sif"
+//Docker image parameters
+params.dockerimage_3_LMT = "lmt_pca:1.0"
 
 process pca {
-    container 'apptainer'
+    container 'docker'
 
     publishDir "${params.output}/logs", mode: 'copy'
 
@@ -25,7 +25,12 @@ process pca {
     
     script:
     """
-    apptainer run --bind ${params.input_dir}:${params.input_dir} --bind ${params.output}:${params.output} '${params.appimage_3_LMT}' PCA -i '${params.input_dir}' -c '${params.manifest}' -s '${params.save_name}' -o '${params.output}' > 'LMT_3_PCA_visualisation_log-${params.save_name}.txt'
+    docker run --rm \
+        -v "${params.input_dir}:${params.input_dir}" \
+        -v "${params.output}:${params.output}" \
+        "${params.dockerimage_3_LMT}" \
+        PCA -i "${params.input_dir}" -c "${params.manifest}" -s "${params.save_name}" -o "${params.output}" \
+        > "LMT_3_PCA_visualisation_log-${params.save_name}.txt"
     """
 }
 

@@ -1,0 +1,10 @@
+.nextflow*
+work/
+results/
+trace.txt
+timeline.html
+report.html
+*.log
+.DS_Store
+Example/data/input.txt
+Example/results

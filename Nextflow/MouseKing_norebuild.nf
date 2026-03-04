@@ -14,10 +14,10 @@ params.time_file = "NULL" // If a time file is provided, the exact time of day c
 params.event_frame_filter = 15 // 15 means that any event shorter than 15 frames (0.5 seconds) will be filtered out
 params.ref = "NULL" //Reference group for effect size calculation
 
-//Apptainer image parameters
-params.appimage_1_LMT = "${MouseKingDir}/Apptainer/1_LMT_rebuild.sif"
-params.appimage_2_LMT = "${MouseKingDir}/Apptainer/2_LMT_processing.sif"
-params.appimage_3_LMT = "${MouseKingDir}/Apptainer/3_LMT_pca.sif"
+//Docker image parameters
+params.dockerimage_1_LMT = "lmt_rebuild:1.0"
+params.dockerimage_2_LMT = "lmt_processing:1.0"
+params.dockerimage_3_LMT = "lmt_pca:1.0"
 
 include { ExtractTables } from './MouseKing_main.nf'
 include { PostProcessing } from './MouseKing_main.nf'

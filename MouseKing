@@ -304,8 +304,8 @@ install() {
         echo "Usage: MouseKing install [local|online]"
         echo
         echo "Modes:"
-        echo "  local   (default) Builds the required apptainer images locally from the generated def files"
-        echo "  online  Fetchs the required apptainer images online from cloud.sylabs.io"
+        echo "  local   (default) Builds the required Docker images locally from the provided Dockerfiles"
+        echo "  online  Fetchs the required Docker images online from DockerHub"
         return 0
     fi
 
@@ -326,7 +326,7 @@ install() {
     echo "Please be patient <3"
 
     # Build and run the command (pass mode to Python as a flag)
-    run_cmd="python3 scripts/LMT_install.py \"$globdir\" --mode \"$mode\""
+    run_cmd="python3 src/LMT_install.py \"$globdir\" --mode \"$mode\""
     run_command "$run_cmd"
 }
 

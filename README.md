@@ -88,50 +88,53 @@ echo 'export PATH="$PATH:/your/directory/path/MouseKing"' >> ~/.bashrc && source
 4. Install MouseKing apptainer images
 To fully install MouseKing and the requirent environments, there are two options. The apptainer images can be installed locally through apptainer or downloaded from cloud.sylabs.io.
 
-  4.1 For the local installation, run:
+4.1 For the local installation, run:
 
-    ```
-    MouseKing install
-    ```
-    or
-    ```
-    MouseKing install local
-    ```
+```
+MouseKing install
+```
 
-    Once this is complete, if you execute an ```ls``` command within the Apptainer directory the following 8 files should be present.
+or
 
-    ```
-    1_LMT_rebuild.def
-    1_LMT_rebuild.sif
-    1_LMT_rebuild.yml
-    2_LMT_processing.def
-    2_LMT_processing.sif
-    2_LMT_processing.yml
-    3_LMT_pca.def
-    3_LMT_pca.sif
-    ```
+```
+MouseKing install local
+```
 
-  4.2 For the online installation, run:
+Once this is complete, if you execute an ```ls``` command within the Apptainer directory the following 8 files should be present.
 
-    ```
-    MouseKing install online
-    ```
+```
+1_LMT_rebuild.def
+1_LMT_rebuild.sif
+1_LMT_rebuild.yml
+2_LMT_processing.def
+2_LMT_processing.sif
+2_LMT_processing.yml
+3_LMT_pca.def
+3_LMT_pca.sif
+```
 
-    Once this is complete, if you execute an ```ls``` command within the Apptainer directory the following 5 files should be present.
+4.2 For the online installation, run:
 
-    ```
-    1_LMT_rebuild.sif
-    1_LMT_rebuild.yml
-    2_LMT_processing.sif
-    2_LMT_processing.yml
-    3_LMT_pca.sif
-    ```
-    **NOTE:** To use the online instillaation you may need to check your connection to Sylabs Cloud through Apptainer
+```
+MouseKing install online
+```
 
-    Firstly, ensure the Sylabs remote endpoint is linked to your apptainer endpoint. Run:
+Once this is complete, if you execute an ```ls``` command within the Apptainer directory the following 5 files should be present.
 
-    ```
-    apptainer remote list
+```
+1_LMT_rebuild.sif
+1_LMT_rebuild.yml
+2_LMT_processing.sif
+2_LMT_processing.yml
+3_LMT_pca.sif
+```
+
+**NOTE:** To use the online instillaation you may need to check your connection to Sylabs Cloud through Apptainer
+
+Firstly, ensure the Sylabs remote endpoint is linked to your apptainer endpoint. Run:
+
+```
+  apptainer remote list
     ```
     If Apptainer is installed you should see the following output, or a very similar output.
 

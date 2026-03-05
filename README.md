@@ -161,7 +161,24 @@ Example:
   MouseKing royale -i Example/data/input.txt -m Example/data/Example_manifest.txt -s MouseKing_Example -o Example/results
 ```
 
-The other MouseKing commands (integrity, rebuild, extract, processing, and pca) can be used to execute the specific steps of the pipeline individually. For more information on each step you can execture the following:
+The format of the input file should appear as follows:
+
+```
+/home/user/storage/LMT/sqlite_files/Cage_1.sqlite
+/home/user/storage/LMT/sqlite_files/Cage_2.sqlite
+/home/user/storage/LMT/sqlite_files/Cage_3.sqlite
+```
+
+For the cage manifest file, while TSV format is reccomened CSV can also be used. The coulmn headings "RFID", "Condition", and "Cage" **MUST** be provided exactly as outlined. The headings **ARE** case sensitive. The format for the cage manifest should appear as follows:
+
+```
+RFID	Condition	Cage
+002028193194	WT	1765-24
+002028193199	WT	1765-24
+002028193230	KO	1765-24
+```
+
+The other MouseKing commands (integrity, rebuild, extract, processing, and pca) can be used to execute the specific steps of the pipeline individually. For more information on each step you can execute, run the following:
 
 ```
 MouseKing <command> --help

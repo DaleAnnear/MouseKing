@@ -28,6 +28,7 @@ process pca {
     docker run --rm \
         -v "${params.input_dir}:${params.input_dir}" \
         -v "${params.output}:${params.output}" \
+        -v "${params.manifest}:${params.manifest}" \
         "${params.dockerimage_3_LMT}" \
         PCA -i "${params.input_dir}" -c "${params.manifest}" -s "${params.save_name}" -o "${params.output}" \
         > "LMT_3_PCA_visualisation_log-${params.save_name}.txt"
@@ -48,12 +49,14 @@ process CheckTheStatistaks {
     
     script:
     """
-    apptainer run --bind ${params.output}:${params.output} --bind ${params.manifest}:${params.manifest} '${params.appimage_3_LMT}' BigShaq -i '${params.output}' -s '${params.save_name}' -o '${params.output}' > 'LMT_3.2_PCA_statistics_log-${params.save_name}.txt'
+    docker run --rm \
+        -v "${params.output}:${params.output}" \
+        -v "${params.manifest}:${params.manifest}" \
+        "${params.dockerimage_3_LMT}" \
+        BigShaq -i "${params.output}" -s "${params.save_name}" -o "${params.output}" \
+        > "LMT_3.2_PCA_statistics_log-${params.save_name}.txt"
     """
 }
-
-//include { pcaVisualisation } from './MouseKing_main.nf'
-//include { CheckTheStatistaks } from './MouseKing_main.nf'
 
 workflow {
     //Run step 1 of the LMT pipeline

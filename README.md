@@ -112,7 +112,7 @@ MouseKing install online
 ## 🔧 Running the tests <a name = "tests"></a>
 
 You can test if the the MouseKing pipeline is installed correctly by executing the below command.  
-**NOTE:** *When using MouseKing you **MUST** supply full paths for the supplied files and directories to be utilised during your run. This is due to the mounting feature of the apptainer images.*
+**NOTE:** *When using MouseKing you **MUST** supply full paths for the supplied files and directories to be utilised during your run. This is due to the mounting requirment of container images.*
 
 ```
 MouseKing royale -i $YOUR_PATH/MouseKing/Example/data/input.txt -m $YOUR_PATH/MouseKing/Example/data/Example_manifest.txt -s MouseKing_Example -o $YOUR_PATH/MouseKing/Example/results

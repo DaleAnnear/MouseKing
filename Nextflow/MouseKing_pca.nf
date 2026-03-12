@@ -10,7 +10,7 @@ params.save_name = "MouseKing_Example"
 params.output = "${MouseKingDir}/Example/results/"
 
 //Docker image parameters
-params.dockerimage_3_LMT = "lmt_pca:1.0"
+params.dockerimage_3_LMT = "daleannear/mouseking:lmt_pca-1.0"
 
 process pca {
     container 'docker'

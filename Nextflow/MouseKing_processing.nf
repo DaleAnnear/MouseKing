@@ -14,7 +14,7 @@ params.time_file = "NULL" // If a time file is provided, the exact time of day c
 params.event_frame_filter = 15 // 15 means that any event shorter than 15 frames (0.5 seconds) will be filtered out
 
 //Apptainer image parameters
-params.dockerimage_2_LMT = "lmt_processing:1.0"
+params.dockerimage_2_LMT = "daleannear/mouseking:lmt_processing-1.0"
 
 process Processing {
     container 'docker'
@@ -30,6 +30,9 @@ process Processing {
     script:
     """
     docker run --rm \
+        -v "${params.input_dir}:${params.input_dir}" \
+        -v "${params.output}:${params.output}" \
+        -v "${params.manifest}:${params.manifest}" \
         "${params.dockerimage_2_LMT}" \
         -i "${params.input_dir}" \
         -c "${params.manifest}" \

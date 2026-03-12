@@ -15,9 +15,9 @@ params.event_frame_filter = 15 // 15 means that any event shorter than 15 frames
 params.ref = "NULL" //Reference group for effect size calculation
 
 //Docker image parameters
-params.dockerimage_1_LMT = "lmt_rebuild:1.0"
-params.dockerimage_2_LMT = "lmt_processing:1.0"
-params.dockerimage_3_LMT = "lmt_pca:1.0"
+params.dockerimage_1_LMT = "daleannear/mouseking:lmt_rebuild-1.0"
+params.dockerimage_2_LMT = "daleannear/mouseking:lmt_processing-1.0"
+params.dockerimage_3_LMT = "daleannear/mouseking:lmt_pca-1.0"
 
 process CheckIntegrity {
     container 'docker'

@@ -304,13 +304,13 @@ install() {
         echo "Usage: MouseKing install [local|online]"
         echo
         echo "Modes:"
-        echo "  local   (default) Builds the required Docker images locally from the provided Dockerfiles"
-        echo "  online  Fetchs the required Docker images online from DockerHub"
+        echo "  local   Builds the required Docker images locally from the provided Dockerfiles"
+        echo "  online  (default) Fetchs the required Docker images online from DockerHub"
         return 0
     fi
 
     # Parse mode with default
-    mode="${1:-local}"
+    mode="${1:-online}"
 
     # Validate mode
     case "$mode" in
@@ -341,7 +341,7 @@ The available commands are:
     rebuild                 Rebuilds all detected mouse events in the provided LMT SQlite files
     extract                 Extracts the EVENT and ANIMAL tables from the provided LMT SQlite files
     processing              Performs processing and filtering of the extracted LMT data contained within the EVENT and ANIMAL tables
-    pca                     Constructs PCA plots for the provided processed LMT data
+    pca                     Constructs PCA plots and performs multivariate statistics for the provided processed LMT data
     install                 Installs the environment required to run MouseKing
 EOF
 }

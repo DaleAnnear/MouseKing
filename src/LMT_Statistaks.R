@@ -97,8 +97,8 @@ if (is.null(options$ref) == T){
 } else {
   df_cd <- purrr::map_dfr(behs, ~ pairwise_cohen_d_str(df_beh, var = .x, condition = "Condition", reference = options$ref))
 }
-fwrite(df_cd, paste0(pcapath, options$save_name, "_EffectSize_data", ".csv"), sep=";", row.names = F, col.names = T, quote = F)
 df_cd$comps <- paste0(df_cd$group1, "_vs_", df_cd$group2)
+df_cd <- df_cd[complete.cases(df_cd),]
 
 ### Plotting ###
 # Plot Boxplots

@@ -12,7 +12,7 @@ params.output = "${MouseKingDir}/Example/results/"
 //Docker image parameters
 params.dockerimage_3_LMT = "daleannear/mouseking:lmt_pca-1.0"
 
-process pca {
+process CheckTheStatistaks_Multivariate_p1 {
     container 'docker'
 
     publishDir "${params.output}/logs", mode: 'copy'
@@ -36,7 +36,7 @@ process pca {
 }
 
 
-process CheckTheStatistaks {
+process CheckTheStatistaks_Multivariate_p2 {
     container 'apptainer'
 
     publishDir "${params.output}/logs", mode: 'copy'
@@ -62,6 +62,6 @@ workflow {
     //Run step 1 of the LMT pipeline
     input_path = Channel.fromPath(params.input_dir)
     
-    pca_output =  pca(input_path)
-    bigshaq_output = CheckTheStatistaks(pca_output)
+    pca_output =  CheckTheStatistaks_Multivariate_p1(input_path)
+    bigshaq_output = CheckTheStatistaks_Multivariate_p2(pca_output)
 }

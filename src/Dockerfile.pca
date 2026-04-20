@@ -34,8 +34,9 @@ RUN set -e \
 #   LMT_PCA_visualisation.R
 #   LMT_Statistaks.R
 #   LMT_functions.R
-COPY LMT_PCA_visualisation.R /workspace/LMT_PCA_visualisation.R
-COPY LMT_Statistaks.R        /workspace/LMT_Statistaks.R
+COPY LMT_Multivariate_Statistaks_p1.R   /workspace/LMT_Multivariate_Statistaks_p1.R
+COPY LMT_Multivariate_Statistaks_p2.R   /workspace/LMT_Multivariate_Statistaks_p2.R
+COPY LMT_Univariate_Statistaks.R        /workspace/LMT_Univariate_Statistaks.R
 COPY LMT_functions.R         /workspace/LMT_functions.R
 
 # Create the conda env (matches your micromamba create line)
@@ -71,14 +72,18 @@ RUN set -e \
 'case "$1" in' \
 '  PCA)' \
 '    shift' \
-'    exec /opt/conda/envs/LMT_pca/bin/Rscript /workspace/LMT_PCA_visualisation.R "$@"' \
+'    exec /opt/conda/envs/LMT_pca/bin/Rscript /workspace/LMT_Multivariate_Statistaks_p1.R "$@"' \
 '    ;;' \
 '  BigShaq)' \
 '    shift' \
-'    exec /opt/conda/envs/LMT_pca/bin/Rscript /workspace/LMT_Statistaks.R "$@"' \
+'    exec /opt/conda/envs/LMT_pca/bin/Rscript /workspace/LMT_Multivariate_Statistaks_p2.R "$@"' \
+'    ;;' \
+'  SmallShaq)' \
+'    shift' \
+'    exec /opt/conda/envs/LMT_pca/bin/Rscript /workspace/LMT_Univariate_Statistaks.R "$@"' \
 '    ;;' \
 '  *)' \
-'    echo "Usage: docker run --rm <image> [PCA|BigShaq] [script arguments]"' \
+'    echo "Usage: docker run --rm <image> [PCA|BigShaq|SmallShaq] [script arguments]"' \
 '    exit 1' \
 '    ;;' \
 'esac' \

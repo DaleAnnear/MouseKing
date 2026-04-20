@@ -21,8 +21,9 @@ params.dockerimage_3_LMT = "daleannear/mouseking:lmt_pca-1.0"
 
 include { ExtractTables } from './MouseKing_main.nf'
 include { PostProcessing } from './MouseKing_main.nf'
-include { pcaVisualisation } from './MouseKing_main.nf'
-include { CheckTheStatistaks } from './MouseKing_main.nf'
+include { CheckTheStatistaks_Multivariate_p1 } from './MouseKing_main.nf'
+include { CheckTheStatistaks_Multivariate_p2 } from './MouseKing_main.nf'
+include { CheckTheStatistaks_Univariate } from './MouseKing_main.nf'
 
 workflow {
     input_file = Channel.fromPath(params.input_file).splitCsv().flatten()
@@ -33,7 +34,8 @@ workflow {
     processing_output = PostProcessing(extract_output)
 
     //Run step 3 of the LMT pipeline
-    pca_output = pcaVisualisation(processing_output)
+    pca_output = CheckTheStatistaks_Multivariate_p1(processing_output)
+    bigshaq_output = CheckTheStatistaks_Multivariate_p2(pca_output)
 
-    bigshaq_output = CheckTheStatistaks(pca_output)
+    smallshaq_output = CheckTheStatistaks_Univariate(processing_output)
 }

@@ -129,13 +129,17 @@ MouseKing
 You should see the following output in your console:
 
 ```
+Welcome to MouseKing! The eminent software pipeline to facilitate the data analysis of the next generation of mouse behaviour phenotyping through the LiveMouseTracker (LMT) platform.
+
 The available commands are:
     royale                  Executes the full MouseKing pipeline
     integrity               Checks the integrity of the provided LMT SQlite files
     rebuild                 Rebuilds all detected mouse events in the provided LMT SQlite files
     extract                 Extracts the EVENT and ANIMAL tables from the provided LMT SQlite files
-    processing              Performs processing and filtering of the extracted LMT data contained...
-    pca                     Constructs PCA plots for the provided processed LMT data
+    processing              Performs processing and filtering of the extracted LMT data contained within the EVENT and ANIMAL tables
+    uni                     Performs univariate statistics for the provided processed LMT data
+    multi                   Performs multivariate statistics for the provided processed LMT data
+    install                 Installs the environment required to run MouseKing
 ```
 
 The "royale" command runs the entire MouseKing pipeline. By executing the follwing command:
@@ -158,7 +162,9 @@ Options:
   -t  Time file - DEFAULT RECOMMENDED (default: NULL)
 
 Example:
-  MouseKing royale -i Example/data/input.txt -m Example/data/Example_manifest.txt -s MouseKing_Example -o Example/results
+  MouseKing royale -i ~/Example/data/input.txt -m ~/Example/data/Example_manifest.txt -s MouseKing_Example -o ~/Example/results
+
+  NOTE: Full paths must be provided
 ```
 
 The format of the input file should appear as follows:

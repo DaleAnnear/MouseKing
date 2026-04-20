@@ -36,10 +36,8 @@ df_beh <- data.frame(fread(list.files(path = options$input_dir, pattern = "Norma
 edf <- data.frame(fread(list.files(path = options$input_dir, pattern = "PCA_variances.csv", full.names = TRUE, recursive = TRUE)[1], sep = ";", fill=T))
 
 out_path <- ensure_trailing_slash(options$output)
-pcapath <- paste0(out_path, "pca/")
+pcapath <- paste0(out_path, "multivariate/")
 ensure_dir(pcapath)
-plotpath <- paste0(out_path, "plots/")
-ensure_dir(plotpath)
 
 df_beh <- df_beh %>% select(V1, contains("count_nz"))
 df_beh <- df_beh %>% rename(Sample = V1)
@@ -130,7 +128,7 @@ for (pc in unique(c("PC1", "PC2", c(names(sig_pcs))))) {
   y_pos <- y_max + 0.1 * abs(y_max)  # vertical position above the boxplot
   p <- p + annotate("text", x = 1.5, y = y_pos, label = plabel, size = 4)
 
-  ggsave(paste0(plotpath, options$save_name, "_", pc, "_Condition_comparison_boxplot.png"), plot = p, width = 6, height = 5, dpi = 300)
+  ggsave(paste0(pcapath, options$save_name, "_", pc, "_Condition_comparison_boxplot.png"), plot = p, width = 6, height = 5, dpi = 300)
   }
 
 list_siG_pcs <- unique(c("PC1", "PC2", names(sig_pcs)))
@@ -162,57 +160,57 @@ for (x in list_siG_pcs){
     ) + 
     guides(fill = guide_legend(ncol = 3)) +
     scale_fill_manual(values = custom_palette)
-  ggsave(paste0(plotpath, options$save_name, "_Loadings_PC",pc,".png"), plot = g, width = 10, height = 8, dpi = 300)
+  ggsave(paste0(pcapath, options$save_name, "_Loadings_PC",pc,".png"), plot = g, width = 10, height = 8, dpi = 300)
   
   # Effect size plots 
-for (y in unique(df_cd$comps)) {
-    
-    df_tmp <- merge(
-      df_ro,
-      df_cd[df_cd$comps == y, c("variable", "group1", "group2", "comps", "d")],
-      by.x = "component",
-      by.y = "variable"
-    )
-    
-    df_tmp <- df_tmp %>%
-      mutate(projected_effect_PC = d * .data[[dim_name]])
-    
-    df_tmp$projected_effect_PC_nz <- df_tmp$projected_effect_PC / max(abs(df_tmp$projected_effect_PC))
-    
-    # save projected_effect_PC_nz back into df_cd
-    colname <- paste0("projected_effect_PC", pc, "_nz")
-    if (!colname %in% names(df_cd)) {
-      df_cd[[colname]] <- NA_real_
-    }
-    
-    idx <- df_cd$comps == y & df_cd$variable %in% df_tmp$component
-    match_idx <- match(df_cd$variable[idx], df_tmp$component)
-    df_cd[idx, colname] <- df_tmp$projected_effect_PC_nz[match_idx]
-    df_tmp <- df_tmp[complete.cases(df_tmp),]
-    
-    gg <- df_tmp %>%
-      mutate(behaviour = factor(behaviour, levels = behaviour[order(-projected_effect_PC_nz)])) %>%
-      ggplot(aes(x = behaviour, y = projected_effect_PC_nz, fill = behaviour.group)) +
-      geom_col() +
-      coord_flip() +
-      theme_minimal() +
-      theme(
-        panel.background = element_rect(fill = "white", color = NA),
-        plot.background = element_rect(fill = "white", color = NA)
-      ) +
-      labs(
-        title = paste0("Projected Condition Effect on PC", pc, " by Behaviour"),
-        x = "Behaviour",
-        y = paste0("\nProjected Effect Size (Cohen's d × Loading on PC", pc, ")"),
-        fill = "Behaviour Group"
-      ) +
-      scale_fill_manual(values = custom_palette) +
-      ylim(-1, 1)
-    
-    ggsave(
-      paste0(plotpath, options$save_name, "_Behaviour_effectsize_PC_", as.character(pc), "_", y, ".png"),
-      plot = gg, width = 10, height = 10, dpi = 300
-    )
+  for (y in unique(df_cd$comps)) {
+      
+      df_tmp <- merge(
+        df_ro,
+        df_cd[df_cd$comps == y, c("variable", "group1", "group2", "comps", "d")],
+        by.x = "component",
+        by.y = "variable"
+      )
+      
+      df_tmp <- df_tmp %>%
+        mutate(projected_effect_PC = d * .data[[dim_name]])
+      
+      df_tmp$projected_effect_PC_nz <- df_tmp$projected_effect_PC / max(abs(df_tmp$projected_effect_PC))
+      
+      # save projected_effect_PC_nz back into df_cd
+      colname <- paste0("projected_effect_PC", pc, "_nz")
+      if (!colname %in% names(df_cd)) {
+        df_cd[[colname]] <- NA_real_
+      }
+      
+      idx <- df_cd$comps == y & df_cd$variable %in% df_tmp$component
+      match_idx <- match(df_cd$variable[idx], df_tmp$component)
+      df_cd[idx, colname] <- df_tmp$projected_effect_PC_nz[match_idx]
+      df_tmp <- df_tmp[complete.cases(df_tmp),]
+      
+      gg <- df_tmp %>%
+        mutate(behaviour = factor(behaviour, levels = behaviour[order(-projected_effect_PC_nz)])) %>%
+        ggplot(aes(x = behaviour, y = projected_effect_PC_nz, fill = behaviour.group)) +
+        geom_col() +
+        coord_flip() +
+        theme_minimal() +
+        theme(
+          panel.background = element_rect(fill = "white", color = NA),
+          plot.background = element_rect(fill = "white", color = NA)
+        ) +
+        labs(
+          title = paste0("Projected Condition Effect on PC", pc, " by Behaviour"),
+          x = "Behaviour",
+          y = paste0("\nProjected Effect Size (Cohen's d × Loading on PC", pc, ")"),
+          fill = "Behaviour Group"
+        ) +
+        scale_fill_manual(values = custom_palette) +
+        ylim(-1, 1)
+      
+      ggsave(
+        paste0(pcapath, options$save_name, "_Behaviour_effectsize_PC_", as.character(pc), "_", y, ".png"),
+        plot = gg, width = 10, height = 10, dpi = 300
+      )
   }
 }
 

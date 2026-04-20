@@ -43,10 +43,8 @@ events_by_cage <- agg_all_events(events, mouse_mani)
 events_by_cage <- events_by_cage[!(events_by_cage$NAME %in% c("Detection", "Head detected")),]
 out_path <- ensure_trailing_slash(options$output)
 
-pcapath <- paste0(out_path, "pca/")
-ensure_dir(pcapath)
-plotpath <- paste0(out_path, "plots/")
-ensure_dir(plotpath)
+out_path <- paste0(out_path, "multivariate/")
+ensure_dir(out_path)
 
 # Cage Means
 cage_sds <- agg_SD(events_agg)
@@ -91,7 +89,7 @@ grp_cols <- c("#00AFBB", "#FC4E07", "darkorchid1", "#E7B800", "#0CB702", "#CC79A
 for (x in nz_groups){
   print(paste0("CONSTRUCTING PCA: ", " ", options$save_name, " - ", x))
   if (x == "all") { numerical_data <- df_wide[3:ncol(df_wide)]
-                    fwrite(numerical_data, paste0(pcapath, options$save_name, "_Normalised_Input", ".csv"), sep=";", row.names = T, col.names = T, quote = F)
+                    fwrite(numerical_data, paste0(out_path, options$save_name, "_Normalised_Input", ".csv"), sep=";", row.names = T, col.names = T, quote = F)
   } else {
       nz_names <- grep(x, names(df_wide))
       nz_names <- names(df_wide)[grep(x, names(df_wide))]
@@ -114,11 +112,11 @@ for (x in nz_groups){
     eigenvalues <- data.pca$sdev^2
     edf <- data.frame("component"=paste0("PC", 1:length(data.pca$sdev)), "sdev"=data.pca$sdev, "eigen"=data.pca$sdev^2)
     edf$var <- edf$eigen / sum(edf$eigen) * 100
-    fwrite(edf, paste0(pcapath, options$save_name, "_PCA_variances", ".csv"), sep=";", row.names = F, col.names = T, quote = F)
+    fwrite(edf, paste0(out_path, options$save_name, "_PCA_variances", ".csv"), sep=";", row.names = F, col.names = T, quote = F)
     }
 
     # Plot PCA
-    tiff(paste0(plotpath, options$save_name, "_", x, "_PCA.tiff"), units="in", width=7.5, height=5, res=300)
+    tiff(paste0(out_path, options$save_name, "_", x, "_PCA.tiff"), units="in", width=7.5, height=5, res=300)
     groups <- as.factor(df_wide$Condition)
     plot_ind <- fviz_pca_ind(data.pca,
                col.ind = groups, # color by groups
@@ -131,7 +129,7 @@ for (x in nz_groups){
     dev.off()
 
     # Contributing Factors Arrows 
-    tiff(paste0(plotpath, options$save_name, "_", x, "_variables.tiff"), units="in", width=7.5, height=5, res=300)
+    tiff(paste0(out_path, options$save_name, "_", x, "_variables.tiff"), units="in", width=7.5, height=5, res=300)
     plot_var <- fviz_pca_var(data.pca,
                col.var = "contrib", # Color by contributions to the PC
                gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
@@ -140,13 +138,13 @@ for (x in nz_groups){
     dev.off()
 }
   
-fwrite(pc_group_df, paste0(pcapath, options$save_name, "_PCA_data", ".csv"), sep=";", row.names = T, col.names = T, quote = F)
+fwrite(pc_group_df, paste0(out_path, options$save_name, "_PCA_data", ".csv"), sep=";", row.names = T, col.names = T, quote = F)
 
   # Gather Contributing Factors
   contrib_df <- gather_var_and_meta(data.pca, out_path, options$save_name)
   contrib_df <- contrib_df[contrib_df$pca.group == "event_count_nz",
     c("component", grep("Dim", names(contrib_df), value = TRUE), "behaviour", "behaviour.group", "pca.group", "Event_Type")]
-  fwrite(contrib_df, paste0(pcapath, options$save_name, "_PCA_loadings", ".csv"), sep=";", row.names = F, col.names = T, quote = F)
+  fwrite(contrib_df, paste0(out_path, options$save_name, "_PCA_loadings", ".csv"), sep=";", row.names = F, col.names = T, quote = F)
 
   # Contributing Factors Boxplots
   gb <- ggplot(contrib_df, aes(x = behaviour.group, y = sqrt(Dim.1^2 + Dim.2^2), fill = behaviour.group)) +
@@ -155,6 +153,6 @@ fwrite(pc_group_df, paste0(pcapath, options$save_name, "_PCA_data", ".csv"), sep
     labs(x = "Behavior Group", y = "Magnitude PC1 and PC2") +
     theme(axis.text.x = element_blank(), axis.title.x = element_blank()) + scale_fill_manual(values = custom_palette)
 
-  tiff(paste0(plotpath, options$save_name, "_CF_boxplot",".tiff"), width=7.5, height=5, unit="in", res=300)
+  tiff(paste0(out_path, options$save_name, "_CF_boxplot",".tiff"), width=7.5, height=5, unit="in", res=300)
   print(gb)
   dev.off()

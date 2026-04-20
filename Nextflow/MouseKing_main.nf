@@ -112,7 +112,7 @@ process PostProcessing {
     """
 }
 
-process pcaVisualisation {
+process CheckTheStatistaks_Multivariate_p1 {
     container 'docker'
 
     publishDir "${params.output}/logs", mode: 'copy'
@@ -134,7 +134,7 @@ process pcaVisualisation {
     """
 }
 
-process CheckTheStatistaks {
+process CheckTheStatistaks_Multivariate_p2 {
     container 'docker'
 
     publishDir "${params.output}/logs", mode: 'copy'
@@ -153,6 +153,28 @@ process CheckTheStatistaks {
         "${params.dockerimage_3_LMT}" \
         BigShaq -i "${params.output}" -s "${params.save_name}" -o "${params.output}" \
         > "LMT_3.2_PCA_statistics_log-${params.save_name}.txt"
+    """
+}
+
+process CheckTheStatistaks_Univariate {
+    container 'docker'
+
+    publishDir "${params.output}/logs", mode: 'copy'
+
+    input:
+        path pcaVisualisation_log
+
+    output:
+        file "LMT_3.3_Uni_statistics_log-${params.save_name}.txt"
+    
+    script:
+    """
+    docker run --rm \
+        -v "${params.output}:${params.output}" \
+        -v "${params.manifest}:${params.manifest}" \
+        "${params.dockerimage_3_LMT}" \
+        SmallShaq -i "${params.output}" -m ${params.manifest} -s "${params.save_name}" -o "${params.output}" \
+        > "LMT_3.3_Uni_statistics_log-${params.save_name}.txt"
     """
 }
 
@@ -177,8 +199,10 @@ workflow {
     //Run step 2 of the LMT pipeline
     processing_output = PostProcessing(extract_output)
 
-    //Run step 3 of the LMT pipeline
-    pca_output = pcaVisualisation(processing_output)
+    //Run step 3 (Multivariate) of the LMT pipeline
+    pca_output = CheckTheStatistaks_Multivariate_p1(processing_output)
+    bigshaq_output = CheckTheStatistaks_Multivariate_p2(pca_output)
 
-    bigshaq_output = CheckTheStatistaks(pca_output)
+    //Run step 3 (Univariate) of the LMT pipeline
+    smallshaq_output = CheckTheStatistaks_Univariate(processing_output)
 }

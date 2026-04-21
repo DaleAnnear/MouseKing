@@ -216,13 +216,13 @@ In the ```logs``` directory you can find the log files for each of the MouseKing
 - LMT_3.2_PCA_statistics_log-{save_name}.txt
 - LMT_3.3_Uni_statistics_log-{save_name}.txt
 
-In the ```tables``` directory you can find the EVENT and ANIMAL tables extracted directly from the LiveMouseTracker sqlite database files. There will be a ANIMAL and EVENT table file for each LMT cage that is analysed. This is the raw data upon which the MouseKing data anylsis takes place. Examples of the table files are as follows:
+In the ```tables``` directory you can find the EVENT and ANIMAL tables extracted directly from the LiveMouseTracker sqlite database files. There will be a ANIMAL and EVENT table file for each LMT cage that is analysed. This is the raw data upon which the MouseKing data analysis takes place. Examples of the table files are as follows:
 - cageX_ANIMAL_{save_name}.csv
 - cageX_EVENT_{save_name}.csv
 - cageY_ANIMAL_{save_name}.csv
 - cageY_EVENT_{save_name}.csv
 
-In the ```processed``` directory you can four different files of proccessed, but still realitively raw data regarding your analysed LMT cages. At this point all events with a duration shorter than the deired frame filter (default: 15 frames) have been removed. These files include:
+In the ```processed``` directory you can four different files of proccessed but still realitively raw data regarding your analysed LMT cages. At this point all events with a duration shorter than the desired frame filter (default: 15 frames) have been removed. These files include:
 - {save_name}_All_Events_filter_frames_{frame_filter}.csv                 - Contains all the detected behaviour events of all mice across all cages
 - {save_name}_Cage_Count_means_filter_frames_{frame_filter}.csv           - Contains the COUNT total, average, and SD of each behaviour type per cage
 - {save_name}_Cage_Events_means_filter_frames_{frame_filter}.csv          - Contains the DURATION total, average, and SD of each behaviour type per cage and mouse condition
@@ -232,7 +232,7 @@ In the ```univariate``` directory you will find the results of the univariate st
 - Univariate_Analysis_Behavioural_Domain_{save_name}.txt  - Contains the raw statisitcal results of the Wilcoxon test and Bonferroni correction for each behaviour type across each possible condition comparrison
 - Univariate_Behavioural_Domains{save_name}.tiff          - Graphical illustration of the significant and non-significant behavoural types and domains across the different condition comparrisons
 
-In the ```multivariate``` directroy you will find the results of the multivariate statistics. Here comparrisons are made across the different mouse conditions outlined within the provided manifest file. The conditions are compared through PCA and post hoc analyses are performed by MANNOVA and ANOVA (parametric) or PERMANOVA and Friedman test (non-parametric). The statistical comparrisons were corrected through Bonferroni correction. The ouput files are as follows:
+In the ```multivariate``` directroy you will find the results of the multivariate statistics. Here comparrisons are made across the different mouse conditions outlined within the provided manifest file. The conditions are compared through PCA and post hoc analyses are performed by MANNOVA and ANOVA (parametric) or PERMANOVA and Friedman test (non-parametric). The statistical comparrisons are corrected through Bonferroni correction. The ouput files are as follows:
 - {save_name}_Normalised_Input.csv                            - Contians the normalised input matrix used to compute the PCA anaylsis
 - {save_name}_PCA_data.csv                                    - Contains the data output of the PCA analysis
 - {save_name}_PCA_loadings.csv                                - Contains the PCA loading data

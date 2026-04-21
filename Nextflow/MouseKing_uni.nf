@@ -29,7 +29,7 @@ process CheckTheStatistaks_Univariate {
         -v "${params.output}:${params.output}" \
         -v "${params.manifest}:${params.manifest}" \
         "${params.dockerimage_3_LMT}" \
-        SmallShaq -i "${params.output}" -s "${params.save_name}" -o "${params.output}" \
+        SmallShaq -i "${params.output}" -m "${params.manifest}" -s "${params.save_name}" -o "${params.output}" \
         > "LMT_3.3_uni_statistics_log-${params.save_name}.txt"
     """
 }

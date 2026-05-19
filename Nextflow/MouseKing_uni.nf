@@ -27,6 +27,7 @@ process CheckTheStatistaks_Univariate {
     """
     docker run --rm \
         -v "${params.output}:${params.output}" \
+        -v "${projectDir}/src/LMT_Univariate_Statistaks.R:/workspace/LMT_Univariate_Statistaks.R" \
         -v "${params.manifest}:${params.manifest}" \
         "${params.dockerimage_3_LMT}" \
         SmallShaq -i "${params.output}" -m "${params.manifest}" -s "${params.save_name}" -o "${params.output}" \

@@ -17,6 +17,7 @@ options <- parse_args(parser)
 library(data.table)
 library(dplyr)
 library(ggplot2)
+library(effsize)
 source("/workspace/LMT_functions.R")
 
 input_path <- list.files(path = options$input_dir, pattern = "*All_Events_filter_frames_.*\\.csv$", full.names = TRUE, recursive = TRUE)[1]
@@ -44,28 +45,29 @@ all_results_df <- data.frame()
 
 for (x in comparisons) {
   parts <- unlist(strsplit(x, "_vs_"))
-  
+
   df <- events_by_cage[events_by_cage$Condition %in% parts, ]
   df$Condition <- factor(df$Condition, levels = parts)
-  
+
   df <- df %>%
     group_by(NAME) %>%
     filter(n_distinct(Condition) == 2) %>%
     ungroup()
-  
+
   df <- df[complete.cases(df), ]
-  
+
   results <- df %>%
     group_by(NAME) %>%
     summarise(
       p_value = wilcox.test(event_count_nz ~ Condition, alternative = "two.sided")$p.value,
+      cohens_d = effsize::cohen.d(event_count_nz ~ Condition, hedges.correction = TRUE)$estimate,
       .groups = "drop"
     ) %>%
     mutate(
       p_adj = p.adjust(p_value, method = "BH"),
       comp = x
     )
-  
+
   all_results_df <- bind_rows(all_results_df, results)
   all_results_df <- all_results_df[complete.cases(all_results_df),]
 }
@@ -122,4 +124,33 @@ tiff(paste0(unipath, "Univariate_Behavioural_Domains_", options$save_name, ".tif
 print(gg)
 dev.off()
 
-fwrite(all_results_df[c("NAME","p_value","p_adj","comp","Behaviour.Type","Event_Type")], paste0(unipath, "Univariate_Analysis_Behavioural_Domain_", options$save_name, ".txt"))
+# Effect size plotting
+for (y in unique(all_results_df$comp)) {
+  df_tmp <- all_results_df[all_results_df$comp == y, ]
+
+  df_tmp <- df_tmp[complete.cases(df_tmp),]
+
+  gg_eff <- df_tmp %>%
+    mutate(Event_Type = factor(Event_Type, levels = Event_Type[order(cohens_d)])) %>%
+    ggplot(aes(x = Event_Type, y = cohens_d, fill = Behaviour.Type)) +
+    geom_col() +
+    coord_flip() +
+    theme_minimal() +
+    theme(
+      panel.background = element_rect(fill = "white", color = NA),
+      plot.background = element_rect(fill = "white", color = NA)
+    ) +
+    labs(
+      title = paste0("Condition Effect by Behaviour (", y, ")"),
+      x = "Behaviour",
+      y = "Effect Size (Cohen's d)",
+      fill = "Behaviour Group"
+    ) +
+    scale_fill_manual(values = custom_palette)
+
+  tiff(paste0(unipath, "Univariate_Behaviour_effectsize_", y, "_", options$save_name, ".tiff"), width=10, height=10, unit="in", res=300)
+  print(gg_eff)
+  dev.off()
+}
+
+fwrite(all_results_df[c("NAME","p_value","p_adj","cohens_d","comp","Behaviour.Type","Event_Type")], paste0(unipath, "Univariate_Analysis_Behavioural_Domain_", options$save_name, ".txt"))

@@ -44,8 +44,11 @@ MouseKing() {
         processing)
             processing "$@"
             ;;
-        pca)
-            pca "$@"
+        uni)
+            uni "$@"
+            ;;
+        multi)
+            uni "$@"
             ;;
         install)
             install "$@"
@@ -272,7 +275,7 @@ uni() {
         echo "  -o  Path to the desired output directory (required)"
         echo ""
         echo "Example:"
-        echo "  MouseKing processing -i Example/data/input.txt -m Example/data/Example_manifest.txt -s MouseKing_Example -o Example/results"
+        echo "  MouseKing uni -i Example/data/input.txt -m Example/data/Example_manifest.txt -s MouseKing_Example -o Example/results"
         return
     fi
 
@@ -311,7 +314,7 @@ multi() {
         echo "  -d  Reference group for effect size (Cohen D value) (optional: default - NULL)"
         echo ""
         echo "Example:"
-        echo "  MouseKing processing -i Example/data/input.txt -m Example/data/Example_manifest.txt -s MouseKing_Example -o Example/results"
+        echo "  MouseKing multi -i Example/data/input.txt -m Example/data/Example_manifest.txt -s MouseKing_Example -o Example/results"
         return
     fi
 

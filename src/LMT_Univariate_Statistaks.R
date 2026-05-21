@@ -73,7 +73,7 @@ for (x in comparisons) {
 
 all_results_df <- merge(all_results_df, event_types)
 all_results_df <- all_results_df %>%
-  group_by(comp) %>%
+  group_by(comp, Behaviour.Type) %>%
   mutate(
     effect_size = ifelse(
       max(abs(cohens_d), na.rm = TRUE) == 0,

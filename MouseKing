@@ -48,7 +48,7 @@ MouseKing() {
             uni "$@"
             ;;
         multi)
-            uni "$@"
+            multi "$@"
             ;;
         install)
             install "$@"

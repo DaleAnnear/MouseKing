@@ -72,16 +72,12 @@ for (x in comparisons) {
 }
 
 all_results_df <- merge(all_results_df, event_types)
-all_results_df <- all_results_df %>%
-  group_by(comp) %>%
-  mutate(
-    effect_size = ifelse(
-      max(abs(cohens_d), na.rm = TRUE) == 0,
-      0,
-      cohens_d / max(abs(cohens_d), na.rm = TRUE)
-    )
-  ) %>%
-  ungroup()
+all_results_df$effect_size <- ave(
+  all_results_df$cohens_d,
+  all_results_df$comp,
+  FUN = normalise_cohens_d
+)
+
 all_results_df <- all_results_df %>% mutate(color = custom_palette[Behaviour.Type])
 all_results_df$color <- ifelse(all_results_df$p_adj > 0.05, "#A9A9A9", all_results_df$color)
 all_results_df$legend <- ifelse(all_results_df$p_adj > 0.05, "Non-significant", all_results_df$Behaviour.Type)
@@ -163,4 +159,4 @@ for (y in unique(all_results_df$comp)) {
   dev.off()
 }
 
-fwrite(all_results_df[c("NAME","p_value","p_adj","cohens_d","effect_size","comp","Behaviour.Type","Event_Type")], paste0(unipath, "Univariate_Analysis_Behavioural_Domain_", options$save_name, ".txt"))
+fwrite(all_results_df[c("NAME","p_value","p_adj","cohens_d","effect_size","comp","Behaviour.Type","Event_Type")], paste0(unipath, "Univariate_Analysis_Behavioural_Domain_", options$save_name, ".txt"), sep=";")

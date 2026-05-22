@@ -518,5 +518,14 @@ pairwise_cohen_d_str <- function(data, var, condition,
   }) %>% arrange(group1, group2)
 }
 
+#Function to normalise Cohen's d values for plotting
+normalise_cohens_d <- function(x) {
+  max_abs <- max(abs(x), na.rm = TRUE)
+  
+  if (!is.finite(max_abs) || max_abs == 0) {
+    return(rep(0, length(x)))
+  }
+}
+
 # Set colour variable for plot construction
 grp_cols <- c("#00AFBB", "#FC4E07", "darkorchid1", "#E7B800", "#0CB702", "#CC79A7", "red", "gray", "black")

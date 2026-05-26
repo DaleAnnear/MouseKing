@@ -518,5 +518,11 @@ pairwise_cohen_d_str <- function(data, var, condition,
   }) %>% arrange(group1, group2)
 }
 
+#Function to normalise Cohen's d values for plotting
+add_effect_size <- function(df) {
+  df$effect_size <- abs(df$cohens_d) / ave(abs(df$cohens_d), df$comp, FUN = max)
+  return(df)
+}
+
 # Set colour variable for plot construction
 grp_cols <- c("#00AFBB", "#FC4E07", "darkorchid1", "#E7B800", "#0CB702", "#CC79A7", "red", "gray", "black")

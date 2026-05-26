@@ -520,7 +520,7 @@ pairwise_cohen_d_str <- function(data, var, condition,
 
 #Function to normalise Cohen's d values for plotting
 add_effect_size <- function(df) {
-  df$effect_size <- abs(df$cohens_d) / ave(abs(df$cohens_d), df$comp, FUN = max)
+  df$effect_size <- df$cohens_d / ave(abs(df$cohens_d), df$comp, FUN = max)
   return(df)
 }
 

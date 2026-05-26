@@ -72,11 +72,7 @@ for (x in comparisons) {
 }
 
 all_results_df <- merge(all_results_df, event_types)
-all_results_df$effect_size <- ave(
-  all_results_df$cohens_d,
-  all_results_df$comp,
-  FUN = normalise_cohens_d
-)
+all_results_df <- add_effect_size(all_results_df)
 
 all_results_df <- all_results_df %>% mutate(color = custom_palette[Behaviour.Type])
 all_results_df$color <- ifelse(all_results_df$p_adj > 0.05, "#A9A9A9", all_results_df$color)

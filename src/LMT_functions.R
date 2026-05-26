@@ -519,12 +519,9 @@ pairwise_cohen_d_str <- function(data, var, condition,
 }
 
 #Function to normalise Cohen's d values for plotting
-normalise_cohens_d <- function(x) {
-  max_abs <- max(abs(x), na.rm = TRUE)
-  
-  if (!is.finite(max_abs) || max_abs == 0) {
-    return(rep(0, length(x)))
-  }
+add_effect_size <- function(df) {
+  df$effect_size <- abs(df$cohens_d) / ave(abs(df$cohens_d), df$comp, FUN = max)
+  return(df)
 }
 
 # Set colour variable for plot construction

@@ -21,6 +21,7 @@ run_command() {
     else
         echo "Command failed with exit status $status."
     fi
+    return "$status"
 }
 
 # MouseKing class-like behavior

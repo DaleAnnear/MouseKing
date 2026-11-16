@@ -1,13 +1,9 @@
 #!/usr/bin/env nextflow
 
-//Set Nextflow work directory
-workDir = "${projectDir}/work"
+include { sqliteInputs; CheckIntegrity } from './MouseKing_tasks'
 
-include { CheckIntegrity } from './MouseKing_main.nf'
+params.save_name = 'Nextflow_test'
 
 workflow {
-    //Run step 1 of the LMT pipeline
-    input_file = Channel.fromPath(params.input_file).splitCsv().flatten()
-    
-    check_integrity_output =  CheckIntegrity(input_file)
+    CheckIntegrity(sqliteInputs(params.input_file), params.save_name, params.output, params.dockerimage_1_LMT)
 }

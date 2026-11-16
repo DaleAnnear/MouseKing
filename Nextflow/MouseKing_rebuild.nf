@@ -1,13 +1,9 @@
 #!/usr/bin/env nextflow
 
-//Set Nextflow work directory
-workDir = "./work"
+include { sqliteInputs; RebuildScript } from './MouseKing_tasks'
 
-include { RebuildScript } from './MouseKing_main.nf'
+params.save_name = 'Nextflow_test'
 
 workflow {
-    //Run step 1 of the LMT pipeline
-    input_file = Channel.fromPath(params.input_file).splitCsv().flatten()
-    
-    rebuild_output =  RebuildScript(input_file)
+    RebuildScript(sqliteInputs(params.input_file), params.save_name, params.output, params.dockerimage_1_LMT)
 }

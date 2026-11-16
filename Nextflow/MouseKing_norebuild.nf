@@ -1,41 +1,11 @@
 #!/usr/bin/env nextflow
 
-//Set Nextflow work directory
-MouseKingDir = "${projectDir}/.."
+include { sqliteInputs; AnalyseDatabases } from './MouseKing_tasks'
 
-//Required pipeline parameters
-params.input_file = "${MouseKingDir}/Example/data/sqlite_file_list.txt"
-params.manifest = "${MouseKingDir}/Example/data/LMT_manifest.txt"
-params.save_name = "Nextflow_test"
-params.output = "${MouseKingDir}/Example/results/"
-
-//Pipeline parameters (We reccommend using the below defaults)
-params.time_file = "NULL" // If a time file is provided, the exact time of day can be calculated for each event
-params.event_frame_filter = 15 // 15 means that any event shorter than 15 frames (0.5 seconds) will be filtered out
-params.ref = "NULL" //Reference group for effect size calculation
-
-//Docker image parameters
-params.dockerimage_1_LMT = "daleannear/mouseking:lmt_rebuild-1.0"
-params.dockerimage_2_LMT = "daleannear/mouseking:lmt_processing-1.0"
-params.dockerimage_3_LMT = "daleannear/mouseking:lmt_pca-1.0"
-
-include { ExtractTables } from './MouseKing_main.nf'
-include { PostProcessing } from './MouseKing_main.nf'
-include { CheckTheStatistaks_Multivariate_p1 } from './MouseKing_main.nf'
-include { CheckTheStatistaks_Multivariate_p2 } from './MouseKing_main.nf'
-include { CheckTheStatistaks_Univariate } from './MouseKing_main.nf'
+params.save_name = 'Nextflow_test'
 
 workflow {
-    input_file = Channel.fromPath(params.input_file).splitCsv().flatten()
-    
-    extract_output =  ExtractTables(input_file).collect()
-
-    //Run step 2 of the LMT pipeline
-    processing_output = PostProcessing(extract_output)
-
-    //Run step 3 of the LMT pipeline
-    pca_output = CheckTheStatistaks_Multivariate_p1(processing_output)
-    bigshaq_output = CheckTheStatistaks_Multivariate_p2(pca_output)
-
-    smallshaq_output = CheckTheStatistaks_Univariate(processing_output)
+    AnalyseDatabases(sqliteInputs(params.input_file), params.save_name, params.output, params.manifest,
+        params.time_file, params.event_frame_filter, params.ref,
+        params.dockerimage_1_LMT, params.dockerimage_2_LMT, params.dockerimage_3_LMT)
 }

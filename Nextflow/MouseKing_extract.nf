@@ -1,11 +1,9 @@
 #!/usr/bin/env nextflow
 
-include { ExtractTables } from './MouseKing_main.nf'
+include { sqliteInputs; ExtractTables } from './MouseKing_tasks'
+
+params.save_name = 'Nextflow_test'
 
 workflow {
-
-    //Run step 1 of the LMT pipeline
-    input_file = Channel.fromPath(params.input_file).splitCsv().flatten()
-    
-    extract_output =  ExtractTables(input_file)
+    ExtractTables(sqliteInputs(params.input_file), params.save_name, params.output, params.dockerimage_1_LMT)
 }

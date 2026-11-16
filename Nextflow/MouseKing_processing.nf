@@ -1,52 +1,11 @@
 #!/usr/bin/env nextflow
 
-//Set Nextflow work directory
-MouseKingDir = "${projectDir}/.."
+include { optionalFile; PostProcessing } from './MouseKing_tasks'
 
-//Required pipeline parameters
-params.input_dir = "${MouseKingDir}/Example/data/"
-params.manifest = "${MouseKingDir}/Example/data/LMT_manifest.txt"
-params.save_name = "MouseKing_Example"
-params.output = "${MouseKingDir}/Example/results/"
-
-//Pipeline parameters (We reccommend using the below defaults)
-params.time_file = "NULL" // If a time file is provided, the exact time of day can be calculated for each event
-params.event_frame_filter = 15 // 15 means that any event shorter than 15 frames (0.5 seconds) will be filtered out
-
-//Apptainer image parameters
-params.dockerimage_2_LMT = "daleannear/mouseking:lmt_processing-1.0"
-
-process Processing {
-    container 'docker'
-
-    publishDir "${params.output}/logs", mode: 'copy'
-
-    input:
-        path input_dir
-
-    output:
-        file "LMT_2_PostProcessing_log-${params.save_name}.txt"
-    
-    script:
-    """
-    docker run --rm \
-        -v "${params.input_dir}:${params.input_dir}" \
-        -v "${params.output}:${params.output}" \
-        -v "${params.manifest}:${params.manifest}" \
-        "${params.dockerimage_2_LMT}" \
-        -i "${params.input_dir}" \
-        -c "${params.manifest}" \
-        -s "${params.save_name}" \
-        -t "${params.time_file}" \
-        -f ${params.event_frame_filter} \
-        -o "${params.output}" \
-        > "LMT_2_PostProcessing_log-${params.save_name}.txt"
-    """
-}
+params.save_name = 'MouseKing_Example'
 
 workflow {
-    //Run step 1 of the LMT pipeline
-    input_path = Channel.fromPath(params.input_dir)
-    
-    processing_output =  Processing(input_path)
+    PostProcessing(file(params.input_dir, checkIfExists: true), file(params.manifest, checkIfExists: true),
+        optionalFile(params.time_file), params.event_frame_filter, params.save_name, params.output,
+        params.dockerimage_2_LMT, 'copy')
 }

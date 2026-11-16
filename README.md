@@ -40,11 +40,11 @@ The following instructions will help you to set up the MouseKing pipeline.
 
 ### Prerequisites
 
-The only Prerequisites for MouseKing are a Linux system and the installation of the latest versions of [Docker](https://https://www.docker.com/) and [Nextflow](https://www.nextflow.io/). Please follow the links below for more information on the installation of these packages.
+MouseKing runs on Linux with Docker and Nextflow (DSL2). See the Nextflow installation guide for the Java requirements.
 
 - [INSTALL Docker](https://docs.docker.com/engine/install/)
 
-- [INSTALL Nextflow](https://www.nextflow.io/docs/latest/install.html)
+- [INSTALL Nextflow](https://docs.seqera.io/nextflow/install)
 
 ### Installing
 
@@ -111,12 +111,18 @@ MouseKing install online
 
 ## 🔧 Running the tests <a name = "tests"></a>
 
-You can test if the the MouseKing pipeline is installed correctly by executing the below command.  
-**NOTE:** *When using MouseKing you **MUST** supply full paths for the supplied files and directories to be utilised during your run. This is due to the mounting requirment of container images.*
+From the repository root, create a list of absolute SQLite paths and run MouseKing on the bundled event tables.
 
+```bash
+printf '%s\n' "$PWD"/Example/data/*.sqlite > "$PWD/Example/data/input.txt"
+MouseKing royale -r FALSE \
+  -i "$PWD/Example/data/input.txt" \
+  -m "$PWD/Example/data/Example_manifest.txt" \
+  -s MouseKing_Example \
+  -o "$PWD/Example/results"
 ```
-MouseKing royale -i $YOUR_PATH/MouseKing/Example/data/input.txt -m $YOUR_PATH/MouseKing/Example/data/Example_manifest.txt -s MouseKing_Example -o $YOUR_PATH/MouseKing/Example/results
-```
+
+Use absolute paths for inputs and output directories. The default `royale` run rebuilds the SQLite databases in place. To test that stage, use a list that points to copies of the databases.
 
 ## 🎈 Usage <a name="usage"></a>
 
@@ -194,7 +200,7 @@ Cage  Treatment Start_Time  Group
 1044 drug_y  13:22:05  treated
 ```
 
-The other MouseKing commands (integrity, rebuild, extract, processing, and pca) can be used to execute the specific steps of the pipeline individually. For more information on each step you can execute, run the following:
+Use `integrity`, `rebuild`, `extract`, `processing`, `uni`, or `multi` to run individual stages. For more information on each step you can execute, run the following:
 
 ```
 MouseKing <command> --help

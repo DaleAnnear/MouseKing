@@ -1,58 +1,52 @@
+# Shared helpers for importing LMT tables, summarising behaviour and comparing conditions.
 
-# Function to read all CSV files in a directory and save each as a separate data frame
+# Event import and aggregation ----
+
+# Store ANIMAL and EVENT CSVs in .GlobalEnv using their file stems as R names.
+# The timing and aggregation helpers use those names to find and pair the tables.
 read_and_save_csv = function(directory) {
-  # List all CSV files in the directory
   csv_files <- list.files(directory, pattern = ".*(ANIMAL|EVENT).*\\.csv$", full.names = TRUE, recursive = TRUE)
   print(paste0("The folllowing data files were located at directroy ", directory))
   print(csv_files)
   
-  # Loop over each file
   for (csv_file in csv_files) {
-    # Read the CSV file
     data <- data.frame(fread(file=csv_file))
-    
-    # Generate a valid variable name from the file name (without extension)
+
     var_name <- make.names(tools::file_path_sans_ext(basename(csv_file)))
-    
-    # Assign the data frame to the variable name in the global environment
+
     assign(var_name, data, envir = .GlobalEnv)
   }
 }
 
-# The data frames are now available in the global environment with names based on the file names
+# Pair each EVENT table with its ANIMAL table and apply the minimum frame count.
+# Store per-table summaries as *_agg and combine the individual rows in all_events.
 aggregate_on_events = function(frame_filter) {
-  # Get all objects in the global environment
   object_names <- ls(envir = .GlobalEnv)
 
-  # Filter for data frames containing "EVENTS" in their names
+  # Exclude summaries that have already been generated from the raw EVENT tables.
   #events_dataframes <- object_names[grepl("EVENT", object_names)]
   events_dataframes <- object_names[grepl("EVENT", object_names) & !grepl("_agg", object_names)]
   
-  # Initialize a list to store all events
   #allevents <- c()
   
-  # Loop over each relevant data frame
   for (df_name in events_dataframes) {
-    # Get the data frame
     print(paste0("Processing table: ", df_name))
     df <- get(df_name, envir = .GlobalEnv)
+    # LMT records the first and last frames of each event inclusively.
     df$FRAME.DUR <- df$ENDFRAME - df$STARTFRAME + 1
     animal_name <- gsub("EVENT", "ANIMAL", df_name)
     animal_df <- get(animal_name, envir = .GlobalEnv)
     animal_df <- animal_df[c("ID", "RFID")]
     df <- df[df$FRAME.DUR >= frame_filter,]
     
-    # Collect all individual events
     ae <- extract_events(df, animal_df)
 
     if (exists("aem") == T) aem <- rbind(aem, ae) else aem <- ae
     
     #allevents <-  c(allevents, data.frame(ae))
     
-    # Apply the aggregate function for event count
+    # Both summaries use the same event, local mouse ID and phase keys.
     result_count <- event_counts(df)
-    
-    # Apply the aggregate function for event duration
     result_dur <- event_timimgs(df)
     
     result <- merge(result_count, result_dur, by=c("NAME","MOUSE","Phase"), all=T)
@@ -60,6 +54,7 @@ aggregate_on_events = function(frame_filter) {
 
     #View(result)
     
+    # These treatment labels come from the file name and precede the manifest join.
     if (grepl("base", df_name) == T) result$condition <- "baseline" else
       if (grepl("wash", df_name) == T) result$condition <- "washout" else
         if (grepl("mino", df_name) == T) result$condition <- "mino" else
@@ -73,7 +68,8 @@ aggregate_on_events = function(frame_filter) {
   assign("all_events", aem, envir = .GlobalEnv)
 }
 
-# Merge event counts together and attontate with cage and Condition info
+# Combine the *_agg tables, omit selected event codes and join the manifest by RFID.
+# Keep the full joins and a complete-case version under separate output names.
 anno_and_clean = function(mani){
   
   remove_events <- c("Detection", "Group4", "Head detected", "MACHINE LEARNING ASSOCIATION", "RFID ASSIGN ANONYMOUS TRACK", "RFID MATCH", "RFID MISMATCH", "Train4")
@@ -94,7 +90,9 @@ anno_and_clean = function(mani){
   assign("All_Events_agg_raw", mdf, envir = .GlobalEnv)
 }
 
-# Initialize libraries for LMT analysis
+# Plotting and statistical helpers ----
+
+# Install any missing analysis packages and attach the complete set.
 Libraries = function(){
   list.of.packages <- c("data.table","car", "RSQLite", "reshape2", "plyr", "ggplot2", "zeallot", "dplyr", "Rmisc", "tidyverse", "lme4", "pbkrtest", "gridExtra", "ggsignif", "optparse")
   new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
@@ -102,9 +100,10 @@ Libraries = function(){
   for (x in list.of.packages) suppressMessages(library(x, character.only = TRUE))
 }
 
-# Perform stats for event counts by Condition
+# Compare conditions per event, accounting for cage with a random intercept
+# when there are multiple cages. The one-cage branch uses the session's KO/WT ratios.
 statistacks_GT = function(counts_df, plot_df){
-  if (length(unique(counts_df$Cage)) > 1){ # Run linear mixed model
+  if (length(unique(counts_df$Cage)) > 1){
     plot_df <- plot_df[plot_df$N > 4,]
     plot_df$test <- apply(plot_df, 1, function(x){
       myData <- counts_df[counts_df$NAME == x[1],]
@@ -116,7 +115,7 @@ statistacks_GT = function(counts_df, plot_df){
       return(list("p_value"=pValue, "EST"=estimate, "STD.ER"=st.error))
     })
     plot_df <- plot_df %>% unnest_wider(test) 
-  } else if (length(unique(counts_df$Cage)) == 1){ # Run t-test
+  } else if (length(unique(counts_df$Cage)) == 1){
     plot_df$p_value <- apply(plot_df, 1, function(x){
       df <- counts_mean_KO_v_WT_df[counts_mean_KO_v_WT_df$NAME==x[1],]
       if (x[1]=="Group4"){0} else {t.test(df$ratio, mu = 1)$p.value}
@@ -133,9 +132,10 @@ statistacks_GT = function(counts_df, plot_df){
   return(plot_df)
 }
 
-# Perform stats for event counts by condition
+# Compare conditions per event using a cage random intercept for multiple cages.
+# For a single cage, test ratios from counts_KO against 1.
 statistacks_Con = function(counts_df, counts_KO, plot_df){
-  if (length(unique(counts_df$Cage)) > 1){ # Run linear mixed model
+  if (length(unique(counts_df$Cage)) > 1){
     plot_df$test <- apply(plot_df, 1, function(x){
       myData <- counts_df[counts_df$NAME == x[1],]
       model<-lmer(Count~Condition+(1|Cage),data=myData)
@@ -146,7 +146,7 @@ statistacks_Con = function(counts_df, counts_KO, plot_df){
       return(list("p_value"=pValue, "EST"=estimate, "STD.ER"=st.error))
     })
     plot_df <- plot_df %>% unnest_wider(test) 
-  } else if (length(unique(counts_df$Cage)) == 1){ # Run t-test
+  } else if (length(unique(counts_df$Cage)) == 1){
     plot_df$p_value <- apply(plot_df, 1, function(x){
       df <- counts_KO[counts_KO$NAME==x[1],]
       if (x[1]=="Group4"){0} else {t.test(df$ratio, mu = 1)$p.value}
@@ -163,9 +163,8 @@ statistacks_Con = function(counts_df, counts_KO, plot_df){
   return(plot_df)
 }
 
-# Function to build the LMT behaviour graph
+# Plot mean event ratios with standard errors and significance annotations.
 build_lmt_plot = function(plot_df, yaxis_title, yaxis_limit){
-  # Build Plot
   gz <- ggplot(plot_df, aes(x=Event_Type, y=ratio, fill=Behaviour.Type)) + geom_hline(yintercept = 1, linetype = "dashed", color = "black", size = 0.5) +  coord_cartesian(ylim = c(0, yaxis_limit)) +
     geom_bar(position=position_dodge(), stat="identity") +
     geom_errorbar(aes(ymin=ratio-se, ymax=ratio+se), width=.3, position=position_dodge(.9)) +
@@ -177,7 +176,7 @@ build_lmt_plot = function(plot_df, yaxis_title, yaxis_limit){
   return(gz)
 }
 
-# Build the plot data frame for lmt graph
+# Summarise event ratios and order the plot by the session's event_type lookup.
 construct_plot_dataframe = function(mean_counts, counts_df, grp_vrs){
   plot_df <- summarySE(mean_counts, measurevar="ratio", groupvars=grp_vrs)
   #plot_df <- statistacks(counts_df, mean_counts, plot_df)
@@ -189,7 +188,7 @@ construct_plot_dataframe = function(mean_counts, counts_df, grp_vrs){
   return(plot_df)
 }
 
-# Perform stats for event with anova
+# Run one event-count ANOVA per behaviour for the selected grouping variable.
 statistacks_ano = function(plot_df, counts_df, vari){
   
   plot_df$pval <- apply(plot_df, 1, function(x){
@@ -211,13 +210,13 @@ statistacks_ano = function(plot_df, counts_df, vari){
   return(plot_df)
 }
 
-# Function to apply times to event tables
+# Event timing and cage summaries ----
+
+# Add clock times and phase labels to the EVENT tables in .GlobalEnv.
+# The start-time lookup matches cage and condition against the table name.
 event_times = function(tfile = "") {
-  # Get all objects in the global environment
   object_names <- ls(envir = .GlobalEnv)
-  # Filter for data frames containing "EVENTS" in their names
   events_dataframes <- object_names[grepl("EVENT", object_names)]
-  # Loop over each relevant data frame
   for (df_name in events_dataframes) {
     df <- get(df_name, envir = .GlobalEnv)
     if (tfile != ""){
@@ -228,6 +227,7 @@ event_times = function(tfile = "") {
   } else start_t <- as_hms("00:00:00")
     #start_t <- tfile$Start_Time[tfile$check == TRUE]
 
+    # Convert the start frame to elapsed seconds using the 30 fps assumption.
     df$SECONDFRAME <- round(df$STARTFRAME/30)
     df$time <- as_hms(as.numeric(start_t) + df$SECONDFRAME)
     df$time_actual <- as.numeric(df$time)
@@ -235,6 +235,8 @@ event_times = function(tfile = "") {
     df$time_actual <-  as_hms(df$time_actual)
     df$Section <- as.numeric(df$time_actual)
     
+    # The clock-time split uses 20:00 and 08:00. The first elapsed hour is
+    # labelled Habituation, and remaining daytime events are split at ten hours.
     df$Phase <- ifelse(df$Section > 72000 & df$Section < 86400, "Night", ifelse(df$Section > 0 & df$Section < 28800, "Night", "Day") )
     df$Phase <- ifelse(df$SECONDFRAME < 3600, "Habituation", ifelse(df$Phase == "Day" & df$SECONDFRAME < 36000, "Day1", ifelse(df$Phase == "Day" & df$SECONDFRAME > 36000, "Day2", df$Phase) ) )
     
@@ -242,7 +244,8 @@ event_times = function(tfile = "") {
   }
 }
 
-# Function to aggregate events and get total duration, average duration, and event duration sd
+# Summarise event durations in frames for each mouse and phase.
+# Add a Total row per event and mouse across phases.
 event_timimgs = function(df){
   dfx <- mouse_one_col(df)
   
@@ -259,7 +262,7 @@ event_timimgs = function(df){
   return(dur)  
 }
 
-# Function to aggregate events and get total counts
+# Count event rows per mouse and phase, then add counts across all phases.
 event_counts = function(df){
 
   dfx <- mouse_one_col(df)
@@ -277,7 +280,8 @@ event_counts = function(df){
   return(count)  
 }
 
-# Function to aggregate events and get total counts
+# Expand the four participant columns into individual mouse-event rows.
+# Retain frame and timing fields and attach the RFID from the ANIMAL table.
 extract_events = function(df, animal_df){
   for (x in c("A", "B", "C", "D")){
     animal <- paste0("IDANIMAL", x)
@@ -291,7 +295,8 @@ extract_events = function(df, animal_df){
   return(rdf)
 }
 
-# Function to get cage averages
+# Join mouse events to the manifest and write two cage summaries to .GlobalEnv.
+# The normalisation table uses observed per-mouse counts for each behaviour.
 cage_means = function(events, mm){
   
   df <- merge(events, mm, by = "RFID")
@@ -301,6 +306,7 @@ cage_means = function(events, mm){
   ccm_df <- do.call(data.frame, ccm_df)
   names(ccm_df) <- c("NAME", "Cage", "Event_Counts", "Event_Mean", "Event_SD")
   
+  # Summarise counts and durations by condition and include an All group for each cage.
   count <- aggregate(FRAME.DUR ~ NAME + Condition + Cage, data = df, FUN = function(x) length = length(x))
   count <- do.call(data.frame, count)
   names(count) <- c("NAME", "Condition", "Cage", "Event_Count")
@@ -326,7 +332,8 @@ cage_means = function(events, mm){
   assign("cage_count_means", ccm_df, envir = .GlobalEnv)
 }
 
-# Function to collect event counts of each mouse in single column
+# Stack participant slots into one mouse ID column for counts and durations.
+# An event with multiple identified mice contributes a row for each participant.
 mouse_one_col = function(df){
   for (x in c("A", "B", "C", "D")){
     animal <- paste0("IDANIMAL", x)
@@ -340,7 +347,7 @@ mouse_one_col = function(df){
   return(dfx)
 }
 
-# Function to get averages of event incidence per cage
+# Calculate each cage's total, mean and SD of per-mouse event counts.
 cage_count_means = function(x, mouse_mani){
   test <- merge(x, mouse_mani, by="RFID")
   
@@ -351,7 +358,7 @@ cage_count_means = function(x, mouse_mani){
   return(test_agg)
 }
 
-# Function to aggregate filtered all events dataframe
+# Join event rows to the manifest and summarise count and duration per behaviour and RFID.
 agg_all_events = function(df, mm){
   df <- merge(df, mm, by = "RFID")
   df_agg <- aggregate(FRAME.DUR ~ NAME + RFID + Condition + Cage, data = df, FUN = function(x) c(total_count = length(x), total_duration = sum(x), mean_duration = mean(x), duration_sd = sd(x)))
@@ -360,7 +367,8 @@ agg_all_events = function(df, mm){
   return(df_agg)
 }
 
-# Function to get cage SD for normalisation
+# Summarise the mean and SD of duration variability for each behaviour and cage.
+# PCA uses these statistics to standardise the per-mouse duration SD.
 agg_SD = function(df){
   df_agg <- aggregate(SD_Dur ~ NAME + Cage, data = df, FUN = function(x) c(mean_sd = mean(x), sd_sd = sd(x)))
   df_agg <- do.call(data.frame, df_agg)
@@ -368,23 +376,26 @@ agg_SD = function(df){
   return(df_agg)
 }
 
-# Function to check for / at then end of the file path
+# Path helpers ----
+
+# Preserve an existing slash or backslash, otherwise append a forward slash.
 ensure_trailing_slash <- function(filepath) {
-  # Check if the filepath ends with "/" or "\\"
   if (!grepl("/$", filepath) && !grepl("\\\\$", filepath)) {
-    # Append a "/" for UNIX-style paths
     filepath <- paste0(filepath, "/")
   }
   return(filepath)
 }
 
+# Insert a literal backslash before each space.
 escape_spaces <- function(file_path) {
-  # Replace spaces with "\ "
   escaped_path <- gsub(" ", "\\\\ ", file_path)
   return(escaped_path)
 }
 
-# Function to add behaviour meta data
+# Behaviour metadata and PCA contributions ----
+
+# Split each PCA variable name into its LMT behaviour and metric suffix.
+# Attach the display label and behavioural domain used in plots.
 add_event_meta = function(df){
   #colnames(df)[colnames(df) == "V1"] <- "component"
   df$component <- row.names(df)
@@ -403,7 +414,7 @@ add_event_meta = function(df){
   return(df)
 }
 
-# Assign LMT Event Meta Data
+# Map LMT event codes to display labels and behavioural domains.
 SP <- data.frame("Behaviour.Type"=c(rep("Spatial Positioning", 4)),
                  "NAME"=c("Center Zone", "Periphery Zone", "Rear at periphery", "Rear in centerWindow"),
                  "Event_Type"=c("Center zone", 	"Periphery zone", 	"Rear at periphery", "Rear at center") )
@@ -422,6 +433,7 @@ GW <- data.frame("Behaviour.Type"=c(rep("Grouping & Withdrawal", 11)),
 
 event_types <- rbind(SP, MB, PSC, IA, GW)
 
+# Keep domain colours consistent across PCA and univariate plots.
 custom_palette <- c("Spatial Positioning"="#00AFBB",
                     "Motor Behavior & Body Posture"="#E7B800",
                     "Physical Social Contact"="#0000FF",
@@ -429,15 +441,14 @@ custom_palette <- c("Spatial Positioning"="#00AFBB",
                     "Grouping & Withdrawal"="#9413CB"
                     )
 
-# Function to gather the varaibale and meta data of PCA
+# Extract variable contributions for each principal component and add behaviour metadata.
 gather_var_and_meta = function(pca_data, out_path, save_name){
-  # Get contributing variable data
   data <- as.data.frame(get_pca_var(pca_data)$contrib)
   data <- add_event_meta(data)
   return(data)
 }
 
-# Assuming df_beh contains behavioral variables and Condition column
+# Calculate a WT-versus-KO effect for one variable in the session's df_beh table.
 get_cohen_d <- function(var_name) {
   x <- df_beh %>% filter(Condition == "WT") %>% pull(var_name)
   y <- df_beh %>% filter(Condition == "KO") %>% pull(var_name)
@@ -445,7 +456,9 @@ get_cohen_d <- function(var_name) {
   return(d)
 }
 
-# Scalable way to validate required options
+# CLI and output validation ----
+
+# Reject missing or empty values for the caller's required CLI options.
 require_options <- function(options, required) {
   missing <- required[vapply(required, function(x) {
     is.null(options[[x]]) || identical(options[[x]], "")
@@ -460,7 +473,7 @@ require_options <- function(options, required) {
   }
 }
 
-# Create a directory if it doesn't exist
+# Ensure an output directory exists and return its path invisibly.
 ensure_dir <- function(path, recursive = FALSE) {
   if (!dir.exists(path)) {
     dir.create(path, recursive = recursive)
@@ -471,7 +484,11 @@ ensure_dir <- function(path, recursive = FALSE) {
   invisible(path)
 }
 
-# Function for calcluating all possible Cohen d values
+# Pairwise effect sizes ----
+
+# Estimate a signed standardised mean difference for one variable.
+# Explicit pairs take precedence, then comparisons against a reference group,
+# then all pairs. Group order determines the sign of the estimate.
 pairwise_cohen_d_str <- function(data, var, condition,
                                  reference = NULL, pairs = NULL,
                                  hedges_correction = TRUE, pooled = TRUE, na_rm = TRUE) {
@@ -518,11 +535,12 @@ pairwise_cohen_d_str <- function(data, var, condition,
   }) %>% arrange(group1, group2)
 }
 
-#Function to normalise Cohen's d values for plotting
+# Divide by the largest absolute estimate within each comparison for plotting.
+# Scaling preserves the direction of each effect.
 add_effect_size <- function(df) {
   df$effect_size <- df$cohens_d / ave(abs(df$cohens_d), df$comp, FUN = max)
   return(df)
 }
 
-# Set colour variable for plot construction
+# Colours for experimental conditions, assigned in the plot's group order.
 grp_cols <- c("#00AFBB", "#FC4E07", "darkorchid1", "#E7B800", "#0CB702", "#CC79A7", "red", "gray", "black")

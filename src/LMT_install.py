@@ -1,17 +1,9 @@
 #!/usr/bin/env python3
-"""
-LMT installer (Docker-first)
+"""Prepare the Docker images and example input list for MouseKing.
 
-Modes:
-  - local  : build Docker images from Dockerfiles
-  - online : pull prebuilt Docker images from Docker Hub
-
-Expected Dockerfiles (default):
-  <globdir>/MouseKing/src/Dockerfile.rebuild
-  <globdir>/MouseKing/src/Dockerfile.processing
-  <globdir>/MouseKing/src/Dockerfile.pca
-
-You can also pass custom paths with --dockerfile-*.
+The local mode builds images from the Dockerfiles under <globdir>/src.
+Use the --dockerfile-* options to select different Dockerfiles. The online
+mode pulls the corresponding image tags from Docker Hub.
 """
 
 from __future__ import annotations
@@ -30,15 +22,14 @@ from typing import Optional, Sequence, Tuple
 try:
     import requests
 except ImportError:
-    requests = None  # we'll degrade gracefully
+    # Only the optional GitHub release check needs requests.
+    requests = None
 
 
-# -----------------------------
-# Utility helpers
-# -----------------------------
+# Command and version helpers
 
 def run(cmd: Sequence[str], *, cwd: Optional[Path] = None) -> None:
-    """Run a command and stream output; raise on failure."""
+    """Run a command with live output and raise if it exits unsuccessfully."""
     print(f"\n$ {' '.join(cmd)}")
     subprocess.run(cmd, cwd=str(cwd) if cwd else None, check=True)
 
@@ -49,9 +40,8 @@ def which_or_die(tool: str, install_url: str) -> None:
         sys.exit(1)
 
 def parse_docker_version(output: str) -> str:
-    # e.g. "Docker version 26.1.4, build 5650f9b"
+    """Extract the version number from the Docker CLI banner."""
     parts = output.replace(",", "").split()
-    # find the token after "version"
     if "version" in parts:
         i = parts.index("version")
         if i + 1 < len(parts):
@@ -59,17 +49,15 @@ def parse_docker_version(output: str) -> str:
     return output.strip()
 
 def parse_nextflow_version(output: str) -> str:
-    """
-    Extract a semantic version from nextflow output.
-    Handles lines like:
-      - "nextflow version 25.10.4 build 12345"
-      - "Nextflow version 25.10.4"
-      - "nextflow 25.10.4"
+    """Extract the first dotted version number from the Nextflow banner.
+
+    Some versions print a separate build number after the release version.
     """
     m = re.search(r'(\d+\.\d+(?:\.\d+)*)', output)
     return m.group(1) if m else output.strip()
 
 def version_tuple(v: str) -> Tuple[int, ...]:
+    """Read the leading numeric components for a numeric version comparison."""
     out = []
     for x in v.split("."):
         try:
@@ -83,9 +71,10 @@ def check_tool(tool_name: str,
                parse_version_fn,
                github_repo: Optional[str],
                install_url: str) -> None:
-    """
-    Check that a tool exists and print local version.
-    Optionally compare to latest GitHub release (if requests is available).
+    """Require a tool on PATH and report its version when available.
+
+    The GitHub comparison is advisory. The installer can proceed when the local
+    version probe or the remote release lookup fails.
     """
     which_or_die(tool_name, install_url)
 
@@ -125,6 +114,7 @@ def check_tool(tool_name: str,
 
 @contextmanager
 def pushd(new_dir: Path):
+    """Temporarily change directories and restore the caller's directory on exit."""
     prev = Path.cwd()
     os.chdir(new_dir)
     try:
@@ -133,11 +123,10 @@ def pushd(new_dir: Path):
         os.chdir(prev)
 
 
-# -----------------------------
-# Installer logic
-# -----------------------------
+# Example inputs and Docker images
 
 def write_example_input(glob_dir: Path) -> None:
+    """Regenerate Example/data/input.txt with paths to the three bundled databases."""
     example_dir = glob_dir / "Example" / "data"
     example_dir.mkdir(parents=True, exist_ok=True)
 
@@ -153,6 +142,7 @@ def write_example_input(glob_dir: Path) -> None:
     print(f"✅ Wrote example input list: {def_example_file}")
 
 def docker_build_image(tag: str, dockerfile: Path, context_dir: Path) -> None:
+    """Build an image with COPY sources resolved from the supplied context."""
     dockerfile = dockerfile.resolve()
     context_dir = context_dir.resolve()
 
@@ -161,7 +151,6 @@ def docker_build_image(tag: str, dockerfile: Path, context_dir: Path) -> None:
     if not context_dir.exists():
         raise FileNotFoundError(f"Context dir not found: {context_dir}")
 
-    # Build context is fixed to /home/dannear/LMT/MouseKing/src
     run(["docker", "build", "-f", str(dockerfile), "-t", tag, str(context_dir)])
 
 def docker_pull_image(tag: str) -> None:
@@ -177,7 +166,6 @@ def main() -> None:
     ap.add_argument("--version", default="1.0",
                     help="Version tag suffix for images (default: 1.0)")
 
-    # Default Dockerfiles
     ap.add_argument("--dockerfile-rebuild", default=None,
                     help="Path to rebuild Dockerfile (optional)")
     ap.add_argument("--dockerfile-processing", default=None,
@@ -193,7 +181,6 @@ def main() -> None:
         print(f"❌ globdir does not exist: {glob_dir}")
         sys.exit(1)
 
-    # Check Docker + Nextflow
     check_tool(
         tool_name="docker",
         version_cmd=["docker", "--version"],
@@ -209,16 +196,13 @@ def main() -> None:
         install_url="https://www.nextflow.io/docs/latest/getstarted.html"
     )
 
-    # Example input file
     write_example_input(glob_dir)
 
-    # Image tags (what you push/pull)
-    # You can change naming scheme here if you prefer.
+    # The workflow defaults use these stage names and version suffixes.
     img_rebuild = f"{args.repo}:lmt_rebuild-{args.version}"
     img_process = f"{args.repo}:lmt_processing-{args.version}"
     img_pca     = f"{args.repo}:lmt_pca-{args.version}"
 
-    # Dockerfile locations
     docker_dir = glob_dir / "src"
     df_rebuild = Path(args.dockerfile_rebuild) if args.dockerfile_rebuild else (docker_dir / "Dockerfile.rebuild")
     df_process = Path(args.dockerfile_processing) if args.dockerfile_processing else (docker_dir / "Dockerfile.processing")
@@ -227,10 +211,9 @@ def main() -> None:
     if args.mode == "local":
         print("🔧 Running LOCAL Docker install (build).")
 
-        # Build context: use glob_dir so COPY lines can see the repo files.
+        # Dockerfile overrides still build from src, where the scripts and environments live.
         context_dir = docker_dir
 
-        # Build images
         docker_build_image(img_rebuild, df_rebuild, context_dir)
         docker_build_image(img_process, df_process, context_dir)
         docker_build_image(img_pca, df_pca, context_dir)

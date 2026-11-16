@@ -1,10 +1,10 @@
-# Required libraries
+# Convert exported ANIMAL and EVENT tables into per-mouse and per-cage summaries
+# for the univariate and multivariate analysis stages.
 library(optparse)
 library(data.table)
 library(hms)
 source("/workspace/LMT_functions.R")
 
-# Initiate option list
 option_list <- list(
   make_option(c("-i", "--input_dir"), type = "character", help = "REQUIRED: Director path containing input sqlite databases (sqlite files must be rebuilt)"),
   make_option(c("-c", "--cage_manifest"), type = "character", help = "REQUIRED: File path to cage manifest file (FORMAT: RFID	Condition	Cage)"),
@@ -14,16 +14,15 @@ option_list <- list(
   make_option(c("-f", "--frame_filter"), type = "numeric", default = 15, help = "Specify the minimum length length of an event to filter (Default: 15 frames)")
 )
 
-# Parse command-line options
 parser <- OptionParser(option_list = option_list)
 options <- parse_args(parser)
 
-# Check for required arguments
 if (is.null(options$input_dir)) stop("Error: Argument --input_dir is required. Use --help for usage information.")
 if (is.null(options$cage_manifest)) stop("Error: Argument --cage_manifest is required. Use --help for usage information.")
 if (is.null(options$save_name)) stop("Error: Argument --save_name is required. Use --help for usage information.")
 if (is.null(options$output)) stop("Error: Argument --output is required. Use --help for usage information.")
 
+# Resolve the inputs and create the directory for the processed tables.
 outpath <- ensure_trailing_slash(normalizePath(options$output))
 outpath <- paste0(outpath, "processed/")
 if (!dir.exists(outpath)) {
@@ -36,27 +35,28 @@ options$input_dir <- ensure_trailing_slash(normalizePath(options$input_dir))
 options$cage_manifest <- normalizePath(options$cage_manifest)
 if (!is.null(options$time_file)) options$time_file <- normalizePath(options$time_file)
 
+# The workflow passes NULL as a string when no start-time file is supplied.
 if (options$time_file %in% c("NULL", "NA")) options$time_file <- NULL
 
-# Clear workspace and import functions
 gc()
+# This lowercase condition labels the batch. The manifest supplies Condition groups.
 condition <- options$save_name
 frame_filter <-  options$frame_filter
 
-# Get Mouse Manifests
+# The manifest links each RFID to its cage and experimental condition.
 mouse_mani <- data.frame(fread(file=options$cage_manifest, stringsAsFactors = FALSE))
 
-# Get file containing cage start times
 if (is.null(options$time_file) == F) tfile <- data.frame(fread(options$time_file))
 
-# Read in and aggregate event counts
+# These helpers share tables through the global environment. Populate timing
+# columns before filtering by event length and summarising counts and durations.
 read_and_save_csv(paste0(options$input_dir))
 if (is.null(options$time_file) == F) event_times(tfile) else event_times()
 aggregate_on_events(frame_filter)
 anno_and_clean(mouse_mani)
 cage_means(all_events, mouse_mani)
 
-#  Write Mouse Event Counts
+# Publish event rows, per-mouse summaries and two cage-level normalisation tables.
 all_events$condition <- condition
 
 fwrite(all_events, file=paste0(outpath, condition,"_All_Events_filter_frames_",as.character(frame_filter),".csv"), sep=";", col.names = T, row.names = F, quote = F)

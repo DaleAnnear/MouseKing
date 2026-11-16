@@ -1,4 +1,5 @@
-# Import libraries
+# Standardise mouse behaviour metrics against their cages, then fit and plot PCA.
+# The CSVs written here feed the multivariate statistics stage.
 library(optparse)
 library(data.table)
 library(corrr)
@@ -13,7 +14,7 @@ library(ggplot2)
 library(ggforce)
 source("/workspace/LMT_functions.R")
 
-# Initiate option list
+# Command-line options ----
 option_list <- list(
   make_option(c("-i", "--input_dir"), type = "character", help = "REQUIRED: Director path containing input sqlite databases (sqlite files must be rebuilt)"),
   make_option(c("-c", "--cage_manifest"), type = "character", help = "REQUIRED: File path to cage manifest file (FORMAT: RFID	Condition	Cage)"),
@@ -21,24 +22,22 @@ option_list <- list(
   make_option(c("-o", "--output"), type = "character", help = "REQUIRED: Output directory path")
 )
 
-# Parse command-line options
 parser <- OptionParser(option_list = option_list)
 options <- parse_args(parser)
 
-# Check for required arguments
 required <- c("input_dir", "cage_manifest", "save_name", "output")
 require_options(options, required)
 
-# Clear workspace and import functions
 gc()
 
-# Read in files
+# Load the manifest and the four CSVs from post-processing ----
 mouse_mani <- data.frame(fread(options$cage_manifest))
 events <- data.frame(fread(list.files(path = options$input_dir, pattern = "*All_Events_filter_frames_.*\\.csv$", full.names = TRUE, recursive = TRUE)))
 events_agg <- data.frame(fread(list.files(path = options$input_dir, pattern = "*Event_Counts_with_duration_filter_frames_.*\\.csv$", full.names = TRUE, recursive = TRUE)))
 cage_durs <- data.frame(fread(list.files(path = options$input_dir, pattern = "*Cage_Events_means_filter_frames_.*\\.csv$", full.names = TRUE, recursive = TRUE)))
 cage_counts <- data.frame(fread(list.files(path = options$input_dir, pattern = "*Cage_Count_means_filter_frames_.*\\.csv$", full.names = TRUE, recursive = TRUE)))
 
+# Reduce individual event rows to one record per behaviour, mouse and cage.
 events_by_cage <- agg_all_events(events, mouse_mani)
 events_by_cage <- events_by_cage[!(events_by_cage$NAME %in% c("Detection", "Head detected")),]
 out_path <- ensure_trailing_slash(options$output)
@@ -46,14 +45,14 @@ out_path <- ensure_trailing_slash(options$output)
 out_path <- paste0(out_path, "multivariate/")
 ensure_dir(out_path)
 
-# Cage Means
+# Use cage-wide summaries across all conditions as the normalisation baseline.
 cage_sds <- agg_SD(events_agg)
 cage_means <- merge(subset(cage_durs[cage_durs$Condition == "All",], select = -Condition), cage_counts, by = c("NAME", "Cage"))
 cage_means <- merge(cage_means, cage_sds, by = c("NAME", "Cage") )
 names(cage_means) <- c( "NAME", "Cage" , "x", "Cage_Duration_Total", "Cage_Duration_Mean", "Cage_Duration_SD", "Cage_Count_Total", "Cage_Count_Mean", "Cage_Count_SD", "SD_Mean", "SD_SD")
 cage_means <- subset(cage_means, select = -x)
 
-# Normalise Data
+# Centre each mouse metric on the corresponding cage mean and scale by its SD.
 norm_base <- events_by_cage
 norm_base <- merge(norm_base, cage_means, by = c("NAME", "Cage"))
 norm_base$event_count_nz <- (norm_base$Event_Count - norm_base$Cage_Count_Mean)/norm_base$Cage_Count_SD
@@ -64,7 +63,7 @@ norm_counts <- norm_base[c("NAME", "RFID", "Condition", "event_count_nz")]
 norm_dur <- norm_base[c("NAME", "RFID", "Condition", "event_dur_nz")]
 norm_sd <-  norm_base[c("NAME", "RFID", "Condition", "sd_nz")]
 
-# Change Table Format
+# Create one column per behaviour and metric for each RFID and condition.
 to_df_wide = function(df){
   df$NAME <- paste0(df$NAME, ".", names(df[ncol(df)]))
   df_long <- df %>% pivot_longer(cols = c(names(df[ncol(df)])), 
@@ -77,17 +76,17 @@ to_df_wide = function(df){
 
 data_frames <- list(to_df_wide(norm_counts), to_df_wide(norm_dur), to_df_wide(norm_sd))
 
-# Merge all data frames by "ID"
+# Join the three metric families and fill missing behaviour-by-mouse values with zero.
 df_wide <- reduce(data_frames, full_join, by = c("RFID", "Condition"))
 df_wide[is.na(df_wide) ] <- 0
 
-# Normalised data to be used in PCA
+# Fit one PCA per metric family and a final PCA across all metrics ----
 nz_groups <- c("event_count_nz", "event_dur_nz", "sd_nz", "all")
 grp_cols <- c("#00AFBB", "#FC4E07", "darkorchid1", "#E7B800", "#0CB702", "#CC79A7", "red", "gray", "black")
 
-# Build PCA Plots
 for (x in nz_groups){
   print(paste0("CONSTRUCTING PCA: ", " ", options$save_name, " - ", x))
+  # Export the full combined matrix before removing columns with infinite values.
   if (x == "all") { numerical_data <- df_wide[3:ncol(df_wide)]
                     fwrite(numerical_data, paste0(out_path, options$save_name, "_Normalised_Input", ".csv"), sep=";", row.names = T, col.names = T, quote = F)
   } else {
@@ -97,7 +96,7 @@ for (x in nz_groups){
     }
   numerical_data <- numerical_data[, !sapply(numerical_data, function(col) any(is.infinite(col)))]
 
-  # Calculate PCA data
+  # Attach RFID and condition to the component scores via the analysis row ID.
   data.pca <- prcomp(numerical_data)
   pc_df <- as.data.frame(data.pca$x)
   pc_df$Sample <- rownames(numerical_data)
@@ -107,7 +106,7 @@ for (x in nz_groups){
   pc_group_df <- left_join(pc_df, group_df, by = "Sample")
   pc_group_df <- pc_group_df[, c("Sample", "RFID", "Condition", setdiff(names(pc_group_df), c("Sample", "RFID", "Condition")))]
 
-  # PCA variance explained
+  # Write explained variance from the count-only PCA.
   if (x == "event_count_nz"){
     eigenvalues <- data.pca$sdev^2
     edf <- data.frame("component"=paste0("PC", 1:length(data.pca$sdev)), "sdev"=data.pca$sdev, "eigen"=data.pca$sdev^2)
@@ -115,38 +114,39 @@ for (x in nz_groups){
     fwrite(edf, paste0(out_path, options$save_name, "_PCA_variances", ".csv"), sep=";", row.names = F, col.names = T, quote = F)
     }
 
-    # Plot PCA
+    # Draw mouse scores by condition with confidence ellipses.
     tiff(paste0(out_path, options$save_name, "_", x, "_PCA.tiff"), units="in", width=7.5, height=5, res=300)
     groups <- as.factor(df_wide$Condition)
     plot_ind <- fviz_pca_ind(data.pca,
-               col.ind = groups, # color by groups
+               col.ind = groups,
                palette = grp_cols,
-               addEllipses = TRUE, # Concentration ellipses
+               addEllipses = TRUE,
                ellipse.type = "confidence",
                legend.title = "Groups",
                repel = TRUE)
     print(plot_ind)
     dev.off()
 
-    # Contributing Factors Arrows 
+    # Colour each variable arrow by its contribution to the principal components.
     tiff(paste0(out_path, options$save_name, "_", x, "_variables.tiff"), units="in", width=7.5, height=5, res=300)
     plot_var <- fviz_pca_var(data.pca,
-               col.var = "contrib", # Color by contributions to the PC
+               col.var = "contrib",
                gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
                repel = TRUE)
     print(plot_var)
     dev.off()
 }
   
+# The final loop iteration fits the combined PCA. Export its mouse scores.
 fwrite(pc_group_df, paste0(out_path, options$save_name, "_PCA_data", ".csv"), sep=";", row.names = T, col.names = T, quote = F)
 
-  # Gather Contributing Factors
+  # Export contributions for count features from that combined PCA.
   contrib_df <- gather_var_and_meta(data.pca, out_path, options$save_name)
   contrib_df <- contrib_df[contrib_df$pca.group == "event_count_nz",
     c("component", grep("Dim", names(contrib_df), value = TRUE), "behaviour", "behaviour.group", "pca.group", "Event_Type")]
   fwrite(contrib_df, paste0(out_path, options$save_name, "_PCA_loadings", ".csv"), sep=";", row.names = F, col.names = T, quote = F)
 
-  # Contributing Factors Boxplots
+  # Summarise the joint PC1 and PC2 contribution magnitude by behavioural domain.
   gb <- ggplot(contrib_df, aes(x = behaviour.group, y = sqrt(Dim.1^2 + Dim.2^2), fill = behaviour.group)) +
     geom_boxplot() +
     theme_minimal() +

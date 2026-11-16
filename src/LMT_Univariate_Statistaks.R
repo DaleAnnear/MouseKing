@@ -1,8 +1,11 @@
 #!/bin/Rscript
 
+# Compare cage-standardised behaviour counts between pairs of conditions.
+# Export the per-behaviour tests, effect sizes and behavioural-domain plots.
+
 library(optparse)
 
-# Initiate option list
+# Command-line options ----
 option_list <- list(
   make_option(c("-i", "--input_dir"), type = "character", help = "REQUIRED: Director path containing input sqlite databases (sqlite files must be rebuilt)"),
   make_option(c("-m", "--cage_manifest"), type = "character", help = "REQUIRED: File path to cage manifest file (FORMAT: RFID	Genotype	Cage)"),
@@ -10,7 +13,6 @@ option_list <- list(
   make_option(c("-o", "--output"), type = "character", help = "REQUIRED: Output directory path")
 )
 
-# Parse command-line options
 parser <- OptionParser(option_list = option_list)
 options <- parse_args(parser)
 
@@ -19,6 +21,7 @@ library(dplyr)
 library(ggplot2)
 source("/workspace/LMT_functions.R")
 
+# Use the first matching event and cage-count exports in the supplied input tree.
 input_path <- list.files(path = options$input_dir, pattern = "*All_Events_filter_frames_.*\\.csv$", full.names = TRUE, recursive = TRUE)[1]
 mani_path <- options$cage_manifest
 cage_path <- list.files(path = options$input_dir, pattern = "*Cage_Count_means_filter_frames_.*\\.csv$", full.names = TRUE, recursive = TRUE)[1]
@@ -27,15 +30,18 @@ unipath <- paste0(out_path, "univariate/")
 ensure_dir(unipath)
 
 event_df <- data.frame(fread(input_path, colClasses = c(RFID = "character")))
+# Reapply the RFID prefix before joining to the manifest.
 event_df$RFID <- paste0("00", event_df$RFID)
 mani_df <- data.frame(fread(mani_path, colClasses = c(RFID = "character")))
 cage_df <- data.frame(fread(cage_path))
 
+# Count events per mouse, then centre and scale each count within its cage.
 events_by_cage <- agg_all_events(event_df, mani_df)
 events_by_cage <- events_by_cage[!(events_by_cage$NAME %in% c("Detection", "Head detected")),]
 events_by_cage <- merge(events_by_cage, cage_df, by=c("NAME", "Cage"))
 events_by_cage$event_count_nz <- (events_by_cage$Event_Count - events_by_cage$Event_Mean)/events_by_cage$Event_SD
 
+# Compare all pairs of conditions ----
 cons <- unique(events_by_cage$Condition)
 comparisons <- apply(combn(cons, 2), 2, paste, collapse = "_vs_")
 comparisons
@@ -48,6 +54,7 @@ for (x in comparisons) {
   df <- events_by_cage[events_by_cage$Condition %in% parts, ]
   df$Condition <- factor(df$Condition, levels = parts)
   
+  # Keep behaviours observed in both conditions, then discard incomplete rows.
   df <- df %>%
     group_by(NAME) %>%
     filter(n_distinct(Condition) == 2) %>%
@@ -55,6 +62,8 @@ for (x in comparisons) {
   
   df <- df[complete.cases(df), ]
   
+  # Test each behaviour with a two-sided Wilcoxon rank-sum test and estimate a
+  # Hedges-corrected effect. Apply Benjamini-Hochberg correction within the pair.
   results <- df %>%
     group_by(NAME) %>%
     summarise(
@@ -71,9 +80,11 @@ for (x in comparisons) {
   all_results_df <- all_results_df[complete.cases(all_results_df),]
 }
 
+# Add display labels and scale effect sizes within each comparison for plotting.
 all_results_df <- merge(all_results_df, event_types)
 all_results_df <- add_effect_size(all_results_df)
 
+# Count significant behaviours by domain and combine the rest in one plot category.
 all_results_df <- all_results_df %>% mutate(color = custom_palette[Behaviour.Type])
 all_results_df$color <- ifelse(all_results_df$p_adj > 0.05, "#A9A9A9", all_results_df$color)
 all_results_df$legend <- ifelse(all_results_df$p_adj > 0.05, "Non-significant", all_results_df$Behaviour.Type)
@@ -125,7 +136,7 @@ tiff(paste0(unipath, "Univariate_Behavioural_Domains_", options$save_name, ".tif
 print(gg)
 dev.off()
 
-# Effect size plotting
+# Plot signed, scaled effects separately for each condition pair.
 for (y in unique(all_results_df$comp)) {
   df_tmp <- all_results_df[all_results_df$comp == y, ]
 
@@ -155,4 +166,5 @@ for (y in unique(all_results_df$comp)) {
   dev.off()
 }
 
+# Retain both the unscaled effect estimates and the values used in the plots.
 fwrite(all_results_df[c("NAME","p_value","p_adj","cohens_d","effect_size","comp","Behaviour.Type","Event_Type")], paste0(unipath, "Univariate_Analysis_Behavioural_Domain_", options$save_name, ".txt"), sep=";")
